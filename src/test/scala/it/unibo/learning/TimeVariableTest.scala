@@ -24,6 +24,6 @@ class TimeVariableTest extends AnyFlatSpec with should.Matchers {
 
   "A data" should "be converted in time variable implicitly" in {
     val data = acceptVar(aData)
-    TimeVariable.independent(aData) shouldBe data
+    aData shouldBe data
   }
 }
