@@ -1,5 +1,6 @@
 package it.unibo.learning
 
+import cats.data
 import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -11,7 +12,7 @@ import scala.util.Random
 class PolicyTest extends AnyFlatSpec with should.Matchers {
   private val seed = 42
   private implicit val random: Random = new Random(seed)
-  private val actions = Set(1, 2, 3)
+  private val actions = data.NonEmptySet.of(1, 2, 3)
   private val bigNumber = 100
   private val state = 0
 

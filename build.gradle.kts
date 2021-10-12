@@ -11,10 +11,10 @@ plugins {
     java
     scala
     id("com.github.johnrengelman.shadow") version "4.0.3"
+    id("cz.augi.gradle.wartremover") version "0.14.2"
     idea
     kotlin("jvm") version "1.3.50"
 }
-
 repositories {
     mavenCentral()
 }
@@ -27,12 +27,16 @@ dependencies {
     // ScaFi dependency
     implementation("org.scala-lang:scala-library:$scalaLib")
     implementation("it.unibo.scafi:scafi-core_${scala}:_")
+    // Cats dependency
+    implementation("org.typelevel:cats-core_${scala}:_")
     // Tests dependency
     testImplementation("org.scalatest:scalatest_${scala}:_")
     testImplementation("junit:junit:_")
     testImplementation("org.scalatestplus:junit-4-13_2.13:_")
 }
 tasks.withType<ScalaCompile> {
+
+    scalaCompileOptions.additionalParameters = mutableListOf("-Xfatal-warnings")
     sourceCompatibility = "1.8"
     targetCompatibility = "1.8"
 }

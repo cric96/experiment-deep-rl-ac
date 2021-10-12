@@ -7,11 +7,12 @@ import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class TimeVariableTest extends AnyFlatSpec with should.Matchers {
+  private val aData = 10
   def acceptVar[A](a: TimeVariable[A]): A = a.value(Clock.start)
 
   "A time variable" should "be time independent" in {
     val clock = Clock.start
-    val invariant = TimeVariable.independent(10)
+    val invariant = TimeVariable.independent(aData)
     invariant.value(clock) shouldBe invariant.value(clock.tick)
   }
 
@@ -22,7 +23,7 @@ class TimeVariableTest extends AnyFlatSpec with should.Matchers {
   }
 
   "A data" should "be converted in time variable implicitly" in {
-    acceptVar(10)
-    succeed
+    val data = acceptVar(aData)
+    TimeVariable.independent(aData) shouldBe data
   }
 }
