@@ -1,6 +1,4 @@
 import java.io.ByteArrayOutputStream
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 // Scala version
 val scalaLib: String by project
@@ -29,6 +27,9 @@ dependencies {
     implementation("it.unibo.scafi:scafi-core_${scala}:_")
     // Cats dependency
     implementation("org.typelevel:cats-core_${scala}:_")
+    // Monocle dependency
+    implementation("dev.optics:monocle-core_${scala}:_")
+    implementation("dev.optics:monocle-macro_${scala}:_")
     // Tests dependency
     testImplementation("org.scalatest:scalatest_${scala}:_")
     testImplementation("junit:junit:_")
