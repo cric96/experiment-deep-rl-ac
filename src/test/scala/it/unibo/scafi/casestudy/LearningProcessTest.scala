@@ -1,11 +1,13 @@
 package it.unibo.scafi.casestudy
 
 import it.unibo.learning.Q
+import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+import org.scalatestplus.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class LearningProcessTest extends AnyFlatSpec with should.Matchers {
-  private val aData = 10
   "A learning process step build" should "build a learning context" in {
     val q: Q[Int, Int] = Q.zeros()
     val state: Int => Int = data => data + 1

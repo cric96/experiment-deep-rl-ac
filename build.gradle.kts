@@ -9,9 +9,11 @@ plugins {
     java
     scala
     id("com.github.johnrengelman.shadow") version "4.0.3"
+    id("org.scoverage") version "7.0.0"
     id("cz.augi.gradle.wartremover") version "0.14.2"
     idea
     kotlin("jvm") version "1.3.50"
+
 }
 repositories {
     mavenCentral()
