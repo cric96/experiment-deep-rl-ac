@@ -3,6 +3,7 @@ import upickle.default.{macroRW, ReadWriter => RW}
 
 sealed trait Q[S, A] extends ((S, A) => Double) {
   def update(state: S, action: A, reward: Double): Q[S, A]
+  def withDefault(value: => Double): Q[S, A]
 }
 
 object Q {
@@ -12,6 +13,7 @@ object Q {
   case class QMap[S, A](map: Map[(S, A), Double]) extends Q[S, A] {
     override def apply(state: S, action: A): Double = map((state, action))
     override def update(state: S, action: A, reward: Double): Q[S, A] = copy(map = map + ((state, action) -> reward))
+    override def withDefault(value: => Double): Q[S, A] = QMap(map.withDefault(_ => value))
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion

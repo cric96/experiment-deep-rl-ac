@@ -2,7 +2,6 @@ package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
-import it.unibo.learning
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
 import it.unibo.storage.LocalStorage
 
@@ -27,17 +26,20 @@ class SwapSource
   lazy val rightSrcStop: Int =
     node.get[Integer]("stop_right_source") // time at which the source at the right of the env stops being a source
   lazy val learnCondition: Boolean = node.get[java.lang.Boolean]("learn")
-  lazy val initialValue: () => Double = node.get[() => Double]("initialValue")
+  lazy val initialValue: Double = node.get[Double]("initial_value")
   // Other constant
   lazy val windowDifferenceSize: Int = 3
   lazy val trajectorySize: Int = 7
   // Learning constants
-  lazy val alpha: TimeVariable[Double] = node.get[learning.TimeVariable[Double]]("alpha")
-  lazy val epsilon: TimeVariable[Double] = node.get[learning.TimeVariable[Double]]("epsilon")
+  lazy val alpha: TimeVariable[Double] =
+    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
+  lazy val epsilon: TimeVariable[Double] =
+    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
-  lazy val actions: NonEmptySet[Int] = node.get[NonEmptySet[Int]]("actions")
-  lazy val q: Q[List[Int], Int] = qTableStorage.loadOrElse(mid(), Q.fillWith(initialValue()))
+  lazy val actions: NonEmptySet[Int] = NonEmptySet.of(0, 1) // TODO this should be put int the alchemist configuration
+  // Pickle loose the default, so we need to replace it each time the map is loaded
+  lazy val q: Q[List[Int], Int] = qTableStorage.loadOrElse(mid(), Q.zeros[List[Int], Int]()).withDefault(initialValue)
   lazy val qLearning: QLearning[List[Int], Int] = QLearning(actions, alpha, gamma)
   // Source condition
   override def source: Boolean =
@@ -45,6 +47,7 @@ class SwapSource
   // Aggregate Program data
   lazy val hopCountMetric: Metric = () => 1
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid(), Clock.start)
+  // Aggregate program
   override def main(): Any = {
     val classicHopCount = classicGradient(source, hopCountMetric) // BASELINE
     val hopCountWithoutRightSource =
@@ -57,13 +60,13 @@ class SwapSource
       .actionEffectDefinition((output, action) => output + action)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val roundData = mux(learnCondition) {
-      learningProblem.act(qLearning, Clock.start)
-    } {
+    val roundData = branch(learnCondition) {
       learningProblem.learn(qLearning, epsilon, Clock.start)
+    } {
+      learningProblem.act(qLearning, Clock.start)
     }
     // Store alchemist info
-
+    node.put[Q[List[Int], Int]]("qtable", roundData.q)
     // Store update data
     qTableStorage.save(mid(), roundData.q)
     clockTableStorage.save(mid(), roundData.clock)

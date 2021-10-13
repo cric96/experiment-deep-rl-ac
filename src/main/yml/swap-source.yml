@@ -1,0 +1,87 @@
+incarnation: scafi
+
+variables:
+  # SIMULATION VARIABLE
+  random: &random { formula: 0 }
+  episodes: &episodes { formula: 1000 }
+  episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
+  episode_length: &episode_length { formula: 120 }
+  stop_learning_at: { formula: 'episodes - 5' }
+  learn: &learn { formula: 'episode % 100 == 0' }
+  range: &range { formula: 8.0 }
+  initial_value: &initial_value { formula: 0.0 }
+  gamma: &gamma { formula: 0.9 }
+  # PROGRAM VARIABLES
+  stop_right_source: &stop_right_source { formula: 35 }
+
+seeds: { scenario: *random, simulation: *random }
+terminate: { type: AfterTime, parameters: [*episode_length] }
+environment: { type: Continuous2DEnvironment }
+network-model: { type: ConnectWithinDistance, parameters: [*range] }
+deployments:
+  - type: Grid
+    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
+    # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
+    #type: GeometricGradientRectangle
+    #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
+    #           # nodes, x, y, sizex, sizey, lambda, step, horizontal, decreasing
+    programs:
+      - time-distribution:
+          type: ExponentialTime
+          parameters: [1]
+        type: Event
+        actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSource, 5.0] }
+      - program: send
+
+    contents:
+      - molecule: range
+        concentration: *range
+      - molecule: classicHopCount
+        concentration: 0
+      - molecule: rlbasedHopCount
+        concentration: 0
+      - molecule: refG
+        concentration: 0
+      - molecule: err_classicHopCount
+        concentration: 0
+      - molecule: err_rlbasedHopCount
+        concentration: 0
+      - molecule: reward
+        concentration: 0
+      - molecule: learn
+        concentration: *learn
+      - molecule: episode
+        concentration: *episode
+      - molecule: stop_right_source
+        concentration: *stop_right_source
+      - molecule: gamma
+        concentration: *gamma
+      - molecule: initial_value
+        concentration: *initial_value
+      - molecule: left_source
+        concentration: 40
+      - molecule: right_source
+        concentration: 59
+      - molecule: episode_length
+        concentration: *episode_length
+
+export:
+  - time
+  - molecule: refG
+    aggregators: [mean]
+    value-filter: onlyfinite
+  - molecule: classicHopCount
+    aggregators: [mean]
+    value-filter: onlyfinite
+  - molecule: rlbasedHopCount
+    aggregators: [mean]
+    value-filter: onlyfinite
+  - molecule: err_classicHopCount
+    aggregators: [sum]
+    value-filter: onlyfinite
+  - molecule: err_rlbasedHopCount
+    aggregators: [sum]
+    value-filter: onlyfinite
+  - molecule: reward
+    aggregators: [ mean ]
+    value-filter: onlyfinite
