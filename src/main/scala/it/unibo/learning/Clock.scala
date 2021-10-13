@@ -7,5 +7,6 @@ case class Clock(ticks: Int) {
 
 object Clock {
   def start: Clock = Clock(0)
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit val clockRW: RW[Clock] = macroRW[Clock]
 }

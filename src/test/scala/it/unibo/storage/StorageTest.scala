@@ -6,6 +6,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import org.scalatestplus.junit.JUnitRunner
 import os.Path
+import scala.collection.parallel.CollectionConverters._
 import upickle.default.{macroRW, ReadWriter => RW}
 
 import java.nio.file.NoSuchFileException
@@ -79,5 +80,9 @@ class StorageTest extends AnyFlatSpec with should.Matchers with BeforeAndAfterEa
     val generic = Generic(10)
     storage.save("generic", generic)
     succeed
+  }
+
+  "Local storage" should "work with multiple thread" in {
+    (0 to 1000).toList.par.foreach(i => storage.save(i.toString, i))
   }
 }

@@ -24,6 +24,8 @@ dependencies {
     implementation("it.unibo.alchemist:alchemist:_")
     implementation("it.unibo.alchemist:alchemist-incarnation-scafi:_")
     implementation("it.unibo.alchemist:alchemist-swingui:_")
+    // Scala par
+    implementation("org.scala-lang.modules:scala-parallel-collections_${scala}:_")
     // ScaFi dependency
     implementation("org.scala-lang:scala-library:$scalaLib")
     implementation("it.unibo.scafi:scafi-core_${scala}:_")

@@ -1,10 +1,12 @@
 package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
 import it.unibo.storage.LocalStorage
+
 import scala.util.Random
 
 class SwapSource
