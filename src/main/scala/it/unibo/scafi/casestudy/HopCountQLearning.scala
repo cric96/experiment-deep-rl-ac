@@ -2,8 +2,9 @@ package it.unibo.scafi.casestudy
 
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning._
-import it.unibo.scafi.casestudy.LearningProcess.{BuilderFinalizer, LearningContext}
+import it.unibo.scafi.casestudy.LearningProcess.{RoundData, BuilderFinalizer, LearningContext}
 import monocle.syntax.all._
+
 import scala.util.Random
 
 trait HopCountQLearning {
@@ -12,7 +13,7 @@ trait HopCountQLearning {
   def source: Boolean
 
   case class HopCountState[S, A](q: Q[S, A], state: S, action: A, output: Double, clock: Clock) {
-    def view: (Q[S, A], Double) = (q, output)
+    def view: RoundData[S, A, Double] = RoundData(q, output, clock)
   }
 
   def learningProcess[S, A](initialQ: Q[S, A]): LearningProcess.QBuilderStep[S, A, Double] =
@@ -22,15 +23,16 @@ trait HopCountQLearning {
     override def learn(
         qLearning: QLearning[S, A],
         epsilon: TimeVariable[Double],
-        initialClock: Clock
-    )(implicit rnd: Random): (Q[S, A], Double) = {
+        clock: Clock
+    )(implicit rnd: Random): RoundData[S, A, Double] = {
       val action = Policy.greedy(ctx.q, ctx.initialCondition.state, qLearning.actions)
       val stateEvolution =
-        HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, initialClock)
+        HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, clock)
       rep(stateEvolution) { ev =>
         // Q-Learning update
-        val stateTPlus = ctx.statePolicy(stateEvolution.output)
-        val reward = ctx.rewardSignal(stateEvolution.output)
+        val nextOutput = hopCount(ev.action, ctx)
+        val stateTPlus = ctx.statePolicy(nextOutput)
+        val reward = ctx.rewardSignal(nextOutput)
         val updatedQ = qLearning.improve(
           (stateEvolution.state, stateEvolution.action, reward, stateTPlus),
           ctx.q,
@@ -39,7 +41,6 @@ trait HopCountQLearning {
         // Agent update
         val nextAction =
           Policy.epsilonGreedy(updatedQ, ev.state, qLearning.actions, epsilon.value(ev.clock))
-        val nextOutput = hopCount(nextAction, ctx)
         ev
           .focus(_.q)
           .replace(updatedQ)
@@ -52,10 +53,10 @@ trait HopCountQLearning {
       }.view
     }
 
-    override def act(qLearning: QLearning[S, A])(implicit random: Random): (Q[S, A], Double) = {
+    override def act(qLearning: QLearning[S, A], clock: Clock)(implicit random: Random): RoundData[S, A, Double] = {
       val action = Policy.greedy(ctx.q, ctx.initialCondition.state, qLearning.actions)
       val stateEvolution =
-        HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, Clock.start)
+        HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, clock)
       rep(stateEvolution) { ev =>
         val stateTPlus = ctx.statePolicy(stateEvolution.output)
         val nextAction = Policy.greedy(ctx.q, ev.state, qLearning.actions)
@@ -66,6 +67,8 @@ trait HopCountQLearning {
           .replace(nextAction)
           .focus(_.state)
           .replace(stateTPlus)
+          .focus(_.clock)
+          .modify(_.tick)
       }.view
     }
 

@@ -20,7 +20,7 @@ class LearningProcessTest extends AnyFlatSpec with should.Matchers {
       .stateDefinition(state)
       .rewardDefinition(reward)
       .actionEffectDefinition(actionEffect)
-      .initialCondition(initialState, initialOutput)
+      .initialConditionDefinition(initialState, initialOutput)
     assert(
       ctx.q == q &&
         ctx.rewardSignal == reward &&

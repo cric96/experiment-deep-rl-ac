@@ -32,6 +32,9 @@ dependencies {
     // Monocle dependency
     implementation("dev.optics:monocle-core_${scala}:_")
     implementation("dev.optics:monocle-macro_${scala}:_")
+    // uPickle dependency
+    implementation("com.lihaoyi:upickle_${scala}:_")
+    implementation("com.lihaoyi:os-lib_${scala}:_")
     // Tests dependency
     testImplementation("org.scalatest:scalatest_${scala}:_")
     testImplementation("junit:junit:_")
