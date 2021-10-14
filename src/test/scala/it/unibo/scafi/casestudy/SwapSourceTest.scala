@@ -9,17 +9,41 @@ import org.scalatestplus.junit.JUnitRunner
 import it.unibo.AlchemistHelper._
 import it.unibo.alchemist.core.implementations.Engine
 import it.unibo.alchemist.model.interfaces.GeoPosition
+import it.unibo.storage.LocalStorage
+import org.scalatest.BeforeAndAfterEach
 
 @RunWith(classOf[JUnitRunner])
 @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of alchemist molecule management
-class SwapSourceTest extends AnyFlatSpec with should.Matchers {
-  val simulationPath: Path = os.pwd / "src" / "main" / "yml" / "swap-source.yml"
+class SwapSourceTest extends AnyFlatSpec with should.Matchers with BeforeAndAfterEach {
+  val simulationPath: Path = os.pwd / "src" / "test" / "yml" / "swap-source-test.yml"
+  val qTables = new LocalStorage[Int]("qtables_test")
+  val clock = new LocalStorage[Int]("clock_test")
+  private def clean(): Unit = {
+    qTables.clean()
+    clock.clean()
+  }
+  override def beforeEach(): Unit =
+    clean()
+  override def afterEach(): Unit =
+    clean()
+
   "SwapSource" should "improve with learning" in {
     val engine: Engine[Any, GeoPosition] = loadAlchemist(simulationPath)
     engine.play()
     engine.run()
     engine.forEach { node =>
-      assert(node.get[Q[List[Int], Int]]("qtable") != Q.zeros[List[Int], Int]())
+      assert(node.get[Q[List[Int], Int]]("qtable") != Q.fillWith[List[Int], Int](node.get[Double]("initial_value")))
+    }
+    succeed
+  }
+
+  "SwapSource" should "leverage q" in {
+    val engine: Engine[Any, GeoPosition] = loadAlchemist(simulationPath)
+    engine.forEach(node => node.put("learn", false))
+    engine.play()
+    engine.run()
+    engine.forEach { node =>
+      assert(node.get[Q[List[Int], Int]]("qtable") == Q.fillWith[List[Int], Int](node.get[Double]("initial_value")))
     }
     succeed
   }

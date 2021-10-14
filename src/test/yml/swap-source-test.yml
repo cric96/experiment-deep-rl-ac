@@ -5,16 +5,16 @@ variables:
   random: &random { formula: 0 }
   episodes: &episodes { formula: 1000 }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
-  episode_length: &episode_length { formula: 120 }
+  episode_length: &episode_length { formula: 10 }
   stop_learning_at: { formula: 'episodes - 5' }
   learn: &learn { formula: 'episode % 100 == 0' }
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
   gamma: &gamma { formula: 0.9 }
-  qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
-  clock_folder: &clock_folder { formula: "'\"clock\"'" }
+  qtable_folder: &qtable_folder { formula: "'\"qtables_test\"'" }
+  clock_folder: &clock_folder { formula: "'\"clock_test\"'" }
   # PROGRAM VARIABLES
-  stop_right_source: &stop_right_source { formula: 35 }
+  stop_right_source: &stop_right_source { formula: 5 }
 
 seeds: { scenario: *random, simulation: *random }
 terminate: { type: AfterTime, parameters: [*episode_length] }
@@ -22,7 +22,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
+    parameters: [0, 0, 50, 10, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
     # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
     #type: GeometricGradientRectangle
     #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
@@ -64,10 +64,6 @@ deployments:
         concentration: *qtable_folder
       - molecule: clock_folder
         concentration: *clock_folder
-      - molecule: gamma
-        concentration: *gamma
-      - molecule: initial_value
-        concentration: *initial_value
       - molecule: left_source
         concentration: 40
       - molecule: right_source

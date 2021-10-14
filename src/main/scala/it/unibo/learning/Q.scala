@@ -14,6 +14,7 @@ object Q {
     override def apply(state: S, action: A): Double = map((state, action))
     override def update(state: S, action: A, reward: Double): Q[S, A] = copy(map = map + ((state, action) -> reward))
     override def withDefault(value: => Double): Q[S, A] = QMap(map.withDefault(_ => value))
+    override def toString(): String = s"QMap { map : ${map.toString()} }"
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion

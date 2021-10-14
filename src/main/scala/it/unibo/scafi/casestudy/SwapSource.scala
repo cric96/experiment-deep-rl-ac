@@ -16,8 +16,8 @@ class SwapSource
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
   // Storage
-  lazy val qTableStorage = new LocalStorage[Int]("qtables")
-  lazy val clockTableStorage = new LocalStorage[Int]("clock")
+  lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
+  lazy val clockTableStorage = new LocalStorage[Int]("clock_folder")
   lazy val passedTime: Double = alchemistTimestamp.toDouble
   // Variable loaded by alchemist configuration.
   lazy val leftSrc: Int = node.get[Integer]("left_source") // ID of the source at the left of the env (the stable one)

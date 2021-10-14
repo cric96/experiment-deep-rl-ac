@@ -130,3 +130,6 @@ gradle-app.setting
 
 clock/
 qtables/
+
+clock_test/
+qtables_test/
