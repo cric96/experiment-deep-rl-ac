@@ -1,5 +1,6 @@
 import java.io.ByteArrayOutputStream
-
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 // Scala version
 val scalaLib: String by project
 val scala: String by project
@@ -66,11 +67,11 @@ if (System.getProperty("os.name").toLowerCase().contains("linux")) {
     // Guess 16GB RAM of which 2 used by the OS
     14 * 1024L
 }
-val taskSizeFromProject: Int? by project
-val threadCountFromProject: Int? by project
-val taskSize = taskSizeFromProject ?: 512
-val threadCount = threadCountFromProject ?: maxOf(1, minOf(Runtime.getRuntime().availableProcessors(), heap.toInt() / taskSize ))
-
+val taskSizeFromProject: String? by project
+val threadCountFromProject: String? by project
+val taskSize: Int = taskSizeFromProject?.toInt() ?: 512
+val threadCount = threadCountFromProject?.toInt() ?: maxOf(1, minOf(Runtime.getRuntime().availableProcessors(), heap.toInt() / taskSize ))
+val today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
 val alchemistGroup = "Run Alchemist"
 /*
  * This task is used to run all experiments in sequence
@@ -87,6 +88,7 @@ val runAllBatch by tasks.register<DefaultTask>("runAllBatch") {
 /*
  * Scan the folder with the simulation files, and create a task for each one of them.
  */
+
 File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
     ?.filter { it.extension == "yml" }
     ?.sortedBy { it.nameWithoutExtension }
@@ -104,6 +106,7 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             }
             this.additionalConfiguration()
         }
+        println("Thread count = $threadCount")
         val capitalizedName = it.nameWithoutExtension.capitalize()
         val graphic by basetask("run${capitalizedName}Graphic")
         runAllGraphic.dependsOn(graphic)
@@ -114,8 +117,9 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             File("data").mkdirs()
             args(
                 "-e", "data/${it.nameWithoutExtension}",
-                "-b",
-                "-var", "seed", "speed", "meanNeighbors", "nodeCount",
+                //"-b",
+                "-e", "data/${today}-${name}",
+                "-var", "episode",
                 "-p", threadCount,
                 "-i", 1
             )

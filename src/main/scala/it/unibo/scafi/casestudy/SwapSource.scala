@@ -2,6 +2,7 @@ package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
+import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
 import it.unibo.storage.LocalStorage
 
@@ -17,8 +18,8 @@ class SwapSource
   implicit lazy val rand: Random = randomGen
   // Storage
   lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
-  lazy val clockTableStorage = new LocalStorage[Int]("clock_folder")
-  lazy val passedTime: Double = alchemistTimestamp.toDouble
+  lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
+  def passedTime: Double = alchemistTimestamp.toDouble
   // Variable loaded by alchemist configuration.
   lazy val leftSrc: Int = node.get[Integer]("left_source") // ID of the source at the left of the env (the stable one)
   lazy val rightSrc: Int =
@@ -34,7 +35,7 @@ class SwapSource
   lazy val alpha: TimeVariable[Double] =
     TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
   lazy val epsilon: TimeVariable[Double] =
-    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
+    TimeVariable.independent(0.5) // TODO this should be put in the alchemist configuration
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
   lazy val actions: NonEmptySet[Int] = NonEmptySet.of(0, 1) // TODO this should be put int the alchemist configuration
@@ -47,6 +48,16 @@ class SwapSource
   // Aggregate Program data
   lazy val hopCountMetric: Metric = () => 1
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid(), Clock.start)
+  // Store data
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
+  lazy val store: EndHandler[Any] = {
+    val storeMonitor = new EndHandler[Any](() => {
+      qTableStorage.save(mid(), node.get[Q[List[Int], Int]]("qtable"))
+      clockTableStorage.save(mid(), node.get[Clock]("clock"))
+    })
+    alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
+    storeMonitor
+  }
   // Aggregate program
   override def main(): Any = {
     val classicHopCount = classicGradient(source, hopCountMetric) // BASELINE
@@ -66,13 +77,19 @@ class SwapSource
       learningProblem.act(qLearning, Clock.start)
     }
     // Store alchemist info
-    node.put[Q[List[Int], Int]]("qtable", roundData.q)
+    node.put("qtable", roundData.q)
+    node.put("clock", roundData.clock)
+    node.put("classicHopCount", classicHopCount)
+    node.put("rlbasedHopCount", roundData.output)
+    node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
+    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - roundData.output))
+    node.put(s"passed_time", passedTime)
+    node.put("src", source)
     // Store update data
-    qTableStorage.save(mid(), roundData.q)
-    clockTableStorage.save(mid(), roundData.clock)
+    store
   }
 
-  private def stateFromWindow(output: Double): List[Int] = List.empty
+  private def stateFromWindow(output: Double): List[Int] = List(output.toInt)
 
   private def rewardSignal(groundTruth: Double, currentValue: Double): Double =
     if ((groundTruth - currentValue) == 0) { 0 }

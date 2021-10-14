@@ -2,7 +2,7 @@ package it.unibo.scafi.casestudy
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-import os.Path
+import os.{Path, pwd}
 import it.unibo.learning.Q
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
@@ -15,7 +15,7 @@ import org.scalatest.BeforeAndAfterEach
 @RunWith(classOf[JUnitRunner])
 @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of alchemist molecule management
 class SwapSourceTest extends AnyFlatSpec with should.Matchers with BeforeAndAfterEach {
-  val simulationPath: Path = os.pwd / "src" / "test" / "yml" / "swap-source-test.yml"
+  val simulationPath: Path = os.pwd / "src" / "test" / "yaml" / "swapSource.yml"
   val qTables = new LocalStorage[Int]("qtables_test")
   val clock = new LocalStorage[Int]("clock_test")
   private def clean(): Unit = {
@@ -33,6 +33,9 @@ class SwapSourceTest extends AnyFlatSpec with should.Matchers with BeforeAndAfte
     engine.run()
     engine.forEach { node =>
       assert(node.get[Q[List[Int], Int]]("qtable") != Q.fillWith[List[Int], Int](node.get[Double]("initial_value")))
+    }
+    engine.getEnvironment.forEach { node =>
+      assert(os.exists(pwd / "qtables" / node.getId.toString))
     }
     succeed
   }
