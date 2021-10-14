@@ -13,9 +13,13 @@ class SwapSource
     with HopCountQLearning
     with StandardSensors
     with ScafiAlchemistSupport
+    with BlockT
+    with FieldUtils
+    with TemporalStateManagement
     with Gradients {
   // Implicit context variable
-  implicit lazy val rand: Random = randomGen
+  //implicit lazy val rand: Random = randomGen
+  implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())
   // Storage
   lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
   lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
@@ -29,13 +33,13 @@ class SwapSource
   lazy val learnCondition: Boolean = node.get[java.lang.Boolean]("learn")
   lazy val initialValue: Double = node.get[Double]("initial_value")
   // Other constant
-  lazy val windowDifferenceSize: Int = 3
-  lazy val trajectorySize: Int = 7
+  lazy val windowDifferenceSize: Int = 7
+  lazy val trajectorySize: Int = 4
   // Learning constants
   lazy val alpha: TimeVariable[Double] =
-    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
+    TimeVariable.independent(0.05) // TODO this should be put in the alchemist configuration
   lazy val epsilon: TimeVariable[Double] =
-    TimeVariable.independent(0.5) // TODO this should be put in the alchemist configuration
+    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
   lazy val actions: NonEmptySet[Int] = NonEmptySet.of(0, 1) // TODO this should be put int the alchemist configuration
@@ -72,9 +76,9 @@ class SwapSource
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
     val roundData = branch(learnCondition) {
-      learningProblem.learn(qLearning, epsilon, Clock.start)
+      learningProblem.learn(qLearning, epsilon, clock)
     } {
-      learningProblem.act(qLearning, Clock.start)
+      learningProblem.act(qLearning, clock)
     }
     // Store alchemist info
     node.put("qtable", roundData.q)
@@ -86,13 +90,23 @@ class SwapSource
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     // Store update data
-    store
+    store // lazy value that initialize the output monitor
   }
 
-  private def stateFromWindow(output: Double): List[Int] = List(output.toInt)
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // needs to be fixed
+  private def stateFromWindow(output: Double): List[Int] = {
+    val outputs = includingSelf.reifyField(nbr(output))
+    val minOutputEntity = outputs.minBy(_._2)
+    val minOutput = minOutputEntity._2
+    val recent = recentValues(windowDifferenceSize, minOutput)
+    val oldState = recent.head
+    val diff = minOutput - oldState
+    recentValues(trajectorySize, diff).toList.map(_.toInt)
+    //List(output.toInt)
+  }
 
   private def rewardSignal(groundTruth: Double, currentValue: Double): Double =
-    if ((groundTruth - currentValue) == 0) { 0 }
+    if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
     else { -1 }
 
 }

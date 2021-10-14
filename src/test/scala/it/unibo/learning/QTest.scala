@@ -18,7 +18,9 @@ class QTest extends AnyFlatSpec with should.Matchers {
   "A Q table" should "be updated" in {
     val rewardData = 10
     val q = Q.zeros[Int, Int]()
-    val updated = q.update(state = 0, action = 0, reward = rewardData)
+    val updated = q
+      .update(state = 0, action = 0, reward = rewardData)
+      .update(state = 0, action = 1, reward = rewardData)
     updated(0, 0) shouldBe rewardData
   }
 

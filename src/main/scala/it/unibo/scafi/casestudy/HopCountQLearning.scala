@@ -29,18 +29,17 @@ trait HopCountQLearning {
       val stateEvolution =
         HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, clock)
       rep(stateEvolution) { ev =>
-        // Q-Learning update
         val nextOutput = hopCount(ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val reward = ctx.rewardSignal(nextOutput)
         val updatedQ = qLearning.improve(
-          (stateEvolution.state, stateEvolution.action, reward, stateTPlus),
-          ctx.q,
-          stateEvolution.clock
+          (ev.state, ev.action, reward, stateTPlus),
+          ev.q,
+          ev.clock
         )
         // Agent update
         val nextAction =
-          Policy.epsilonGreedy(updatedQ, ev.state, qLearning.actions, epsilon.value(ev.clock))
+          Policy.epsilonGreedy(updatedQ, stateTPlus, qLearning.actions, epsilon.value(ev.clock))
         ev
           .focus(_.q)
           .replace(updatedQ)
@@ -50,6 +49,8 @@ trait HopCountQLearning {
           .replace(nextOutput)
           .focus(_.action)
           .replace(nextAction)
+          .focus(_.state)
+          .replace(stateTPlus)
       }.view
     }
 
@@ -58,23 +59,25 @@ trait HopCountQLearning {
       val stateEvolution =
         HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, clock)
       rep(stateEvolution) { ev =>
-        val stateTPlus = ctx.statePolicy(stateEvolution.output)
-        val nextAction = Policy.greedy(ctx.q, ev.state, qLearning.actions)
-        val nextOutput = hopCount(nextAction, ctx)
-        ev.focus(_.output)
+        val nextOutput = hopCount(ev.action, ctx)
+        val stateTPlus = ctx.statePolicy(nextOutput)
+        val nextAction =
+          Policy.greedy(ev.q, stateTPlus, qLearning.actions)
+        ev
+          .focus(_.clock)
+          .modify(_.tick)
+          .focus(_.output)
           .replace(nextOutput)
           .focus(_.action)
           .replace(nextAction)
           .focus(_.state)
           .replace(stateTPlus)
-          .focus(_.clock)
-          .modify(_.tick)
       }.view
     }
 
     private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {
       rep(ctx.initialCondition.output) { hopCount =>
-        mux(source)(0.0)(ctx.actionEffect(minHood(nbr(hopCount)) + 1, action))
+        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)) + 1, action))
       }
     }
   }

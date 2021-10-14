@@ -3,14 +3,17 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   random: &random { formula: 0 }
-  episodes: &episodes { formula: 10 }
+  episodes: &episodes { formula: 100 }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
   episode_length: &episode_length { formula: 120 }
-  stop_learning_at: { formula: 'episodes - 5' }
-  learn: &learn { formula: 'episode % 100 == 0' }
+  stop_learning_at: { formula: 'episodes' }
+  learn: &learn
+    language: scala
+    formula: >
+      episode.asInstanceOf[java.lang.Double].intValue % 10 == 0
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
-  gamma: &gamma { formula: 0.9 }
+  gamma: &gamma { formula: 0.99 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
   # PROGRAM VARIABLES
