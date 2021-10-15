@@ -1,6 +1,6 @@
 package it.unibo.scafi.casestudy
 
-import cats.data.NonEmptySet
+import cats.data.{NonEmptySet, NonEmptyVector}
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
@@ -18,8 +18,8 @@ class SwapSource
     with TemporalStateManagement
     with Gradients {
   // Implicit context variable
-  //implicit lazy val rand: Random = randomGen
-  implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())
+  implicit lazy val rand: Random = randomGen
+  //implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())
   // Storage
   lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
   lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
@@ -37,9 +37,9 @@ class SwapSource
   lazy val trajectorySize: Int = 4
   // Learning constants
   lazy val alpha: TimeVariable[Double] =
-    TimeVariable.independent(0.05) // TODO this should be put in the alchemist configuration
-  lazy val epsilon: TimeVariable[Double] =
     TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
+  lazy val epsilon: TimeVariable[Double] =
+    TimeVariable.independent(0.05) // TODO this should be put in the alchemist configuration
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
   lazy val actions: NonEmptySet[Int] = NonEmptySet.of(0, 1) // TODO this should be put int the alchemist configuration
@@ -93,16 +93,12 @@ class SwapSource
     store // lazy value that initialize the output monitor
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.All")) // needs to be fixed
   private def stateFromWindow(output: Double): List[Int] = {
-    val outputs = includingSelf.reifyField(nbr(output))
-    val minOutputEntity = outputs.minBy(_._2)
-    val minOutput = minOutputEntity._2
+    val minOutput = minHood(output)
     val recent = recentValues(windowDifferenceSize, minOutput)
-    val oldState = recent.head
+    val oldState = recent.headOption.getOrElse(minOutput)
     val diff = minOutput - oldState
     recentValues(trajectorySize, diff).toList.map(_.toInt)
-    //List(output.toInt)
   }
 
   private def rewardSignal(groundTruth: Double, currentValue: Double): Double =

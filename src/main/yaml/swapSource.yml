@@ -3,23 +3,28 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   random: &random { formula: 0 }
-  episodes: &episodes { formula: 100 }
+  last_greedy_episodes: { formula: 10.0 }
+  learning_episodes: { formula: 100.0 }
+  episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
+  greedy_each: { formula: 'episodes / 10.0' }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
   episode_length: &episode_length { formula: 120 }
-  stop_learning_at: { formula: 'episodes' }
   learn: &learn
     language: scala
     formula: >
-      episode.asInstanceOf[java.lang.Double].intValue % 10 == 0
+      val ep = episode.asInstanceOf[java.lang.Double].intValue;
+      val each = greedy_each.asInstanceOf[java.lang.Double].intValue;
+      val learn_ep = learning_episodes.asInstanceOf[java.lang.Double].intValue;
+      ep % each != 0 && ep < learn_ep
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
-  gamma: &gamma { formula: 0.99 }
+  gamma: &gamma { formula: 0.90 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
 
-seeds: { scenario: *random, simulation: *random }
+seeds: { scenario: *episode, simulation: *episode }
 terminate: { type: AfterTime, parameters: [*episode_length] }
 environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }

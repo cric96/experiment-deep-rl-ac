@@ -1,57 +1,62 @@
 package it.unibo.scafi.casestudy
 
-import scala.collection.immutable.Queue
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 
-@SuppressWarnings(Array("org.wartremover.warts.All")) // needs to be fixed
+import scala.collection.immutable.Queue
+
 trait TemporalStateManagement {
   self: AggregateProgram with FieldUtils =>
+  val minWindowsSize = 2
   // TODO: add in ScaFi stdlib
-  def delta(value: Double, k: Int = 2, default: Double = Double.PositiveInfinity): Double = {
+  def delta(value: Double, k: Int, default: Double): Double = {
+    require(k > minWindowsSize)
     val vs = recentValues(k, value)
-    if (vs.drop(k - 1).isEmpty) default else vs.last - vs.head
+    val deltaResult = for {
+      head <- vs.headOption
+      last <- vs.take(k).lastOption
+    } yield (head - last)
+    deltaResult.getOrElse(default)
   }
 
   // TODO: add in ScaFi stdlib
-  def deltas[T: Numeric](value: T, k: Int = 2, default: Boolean = false): Iterable[T] = {
+  def deltas[T: Numeric](value: T, k: Int): Iterable[T] = {
+    require(k > minWindowsSize)
     val vs = recentValues(k, value)
-    if (vs.drop(1).isEmpty)
-      List()
-    else
-      vs.sliding(size = 2, step = 1)
-        .map(q => implicitly[Numeric[T]].minus(q.head, q.drop(1).head))
-        .toList
-  }
-
-  // TODO: add in ScaFi stdlib
-  def isIncreasing[T: Ordering](value: T, k: Int = 2, default: Boolean = false): Boolean = {
-    val vs = recentValues(k, value)
-    if (vs.drop(1).isEmpty)
-      default
-    else {
-      vs.sliding(size = 2, step = 1)
-        .map(q => implicitly[Ordering[T]].compare(q.head, q.drop(1).head))
-        .sum < 0
+    vs match {
+      case Queue(_) => List.empty
+      case _ =>
+        vs.sliding(minWindowsSize)
+          .map(_.toList)
+          .collect { case head :: last :: _ => implicitly[Numeric[T]].minus(head, last) }
+          .toList
     }
-
   }
 
   // TODO: add in ScaFi stdlib
-  def isStable[T](value: T, k: Int = 2): Boolean = {
-    val r = recentValues(k, value).forall(_ == value)
-    //println(s"value ${r}")
-    r
+  def isIncreasing[T: Ordering](value: T, k: Int, default: Boolean): Boolean = {
+    require(k > minWindowsSize)
+    val vs = recentValues(k, value)
+    vs match {
+      case Queue(_) => default
+      case _ =>
+        vs.sliding(minWindowsSize)
+          .map(_.toList)
+          .collect { case head :: last :: _ => implicitly[Ordering[T]].compare(head, last) }
+          .sum < 0
+    }
+  }
+
+  // TODO: add in ScaFi stdlib
+  def isStable[T](value: T, k: Int): Boolean = {
+    require(k > minWindowsSize)
+    recentValues(k, value).forall(_ == value)
   }
   // TODO: add in ScaFi stdlib
   def previous[T](value: T): Option[T] =
-    recentValues(2, value).dropRight(1).headOption
+    recentValues(minWindowsSize, value).dropRight(1).headOption
 
   // TODO: add in ScaFi stdlib
-  def meanHood(v: Double): Double =
-    excludingSelf.sumHood(nbr(v)) / excludingSelf.sumHood(1)
-
-  // TODO: add in ScaFi stdlib
-  def varianceFor(k: Int, value: Double): Double = {
+  def varianceFor(value: Double, k: Int): Double = {
     val vs = recentValues(k, value)
     val len = vs.length
     val mean = vs.sum / len
@@ -60,7 +65,5 @@ trait TemporalStateManagement {
 
   // TODO: add in ScaFi stdlib
   def recentValues[T](k: Int, value: T): Queue[T] =
-    rep((Queue[T]())) { case (vls) =>
-      (if (vls.size == k) vls.tail else vls) :+ value
-    }
+    rep(Queue[T]()) { case (vls) => vls.takeRight(k) :+ value }
 }
