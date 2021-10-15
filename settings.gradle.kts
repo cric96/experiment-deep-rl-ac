@@ -21,4 +21,4 @@ buildscript {
     }
 }
 
-rootProject.name = "fai-saso-2021-scafi-rl"
+rootProject.name = "alpaca-2022-ac-rl"
