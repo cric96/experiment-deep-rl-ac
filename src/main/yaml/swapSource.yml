@@ -6,7 +6,7 @@ variables:
   last_greedy_episodes: { formula: 10.0 }
   learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
-  greedy_each: { formula: 'episodes / 10.0' }
+  greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
   episode_length: &episode_length { formula: 120 }
   learn: &learn
@@ -18,7 +18,7 @@ variables:
       ep % each != 0 && ep < learn_ep
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
-  gamma: &gamma { formula: 0.90 }
+  gamma: &gamma { formula: 0.1 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
   # PROGRAM VARIABLES

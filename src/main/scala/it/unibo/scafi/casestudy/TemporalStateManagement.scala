@@ -65,5 +65,5 @@ trait TemporalStateManagement {
 
   // TODO: add in ScaFi stdlib
   def recentValues[T](k: Int, value: T): Queue[T] =
-    rep(Queue[T]()) { case (vls) => vls.takeRight(k) :+ value }
+    rep(Queue[T]()) { case (vls) => (if (vls.size == k) vls.drop(1) else vls) :+ value }
 }

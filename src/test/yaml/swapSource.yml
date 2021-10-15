@@ -14,7 +14,7 @@ variables:
   qtable_folder: &qtable_folder { formula: "'\"qtables_test\"'" }
   clock_folder: &clock_folder { formula: "'\"clock_test\"'" }
   # PROGRAM VARIABLES
-  stop_right_source: &stop_right_source { formula: 5 }
+  stop_right_source: &stop_right_source { formula: 2 }
 
 seeds: { scenario: *random, simulation: *random }
 terminate: { type: AfterTime, parameters: [*episode_length] }

@@ -37,7 +37,7 @@ class SwapSource
   lazy val trajectorySize: Int = 4
   // Learning constants
   lazy val alpha: TimeVariable[Double] =
-    TimeVariable.independent(0.1) // TODO this should be put in the alchemist configuration
+    TimeVariable.independent(0.9) // TODO this should be put in the alchemist configuration
   lazy val epsilon: TimeVariable[Double] =
     TimeVariable.independent(0.05) // TODO this should be put in the alchemist configuration
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
@@ -94,7 +94,7 @@ class SwapSource
   }
 
   private def stateFromWindow(output: Double): List[Int] = {
-    val minOutput = minHood(output)
+    val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
     val diff = minOutput - oldState
