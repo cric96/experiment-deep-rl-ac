@@ -19,7 +19,7 @@ class SwapSource
     with Gradients {
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
-  //implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())
+  /*implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())*/
   // Storage
   lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
   lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
