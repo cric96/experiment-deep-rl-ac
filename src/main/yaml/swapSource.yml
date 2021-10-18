@@ -24,6 +24,14 @@ variables:
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
 
+## Time variable
+_alpha: &alpha >
+  it.unibo.learning.TimeVariable.independent(0.9)
+_epsilon: &epsilon >
+  it.unibo.learning.TimeVariable.independent(0.01)
+_actions: &actions >
+  cats.data.NonEmptySet.of(0, 1)
+
 seeds: { scenario: *episode, simulation: *episode }
 terminate: { type: AfterTime, parameters: [*episode_length] }
 environment: { type: Continuous2DEnvironment }
@@ -76,6 +84,12 @@ deployments:
         concentration: *gamma
       - molecule: initial_value
         concentration: *initial_value
+      - molecule: alpha
+        concentration: *alpha
+      - molecule: epsilon
+        concentration: *epsilon
+      - molecule: actions
+        concentration: *actions
       - molecule: left_source
         concentration: 40
       - molecule: right_source

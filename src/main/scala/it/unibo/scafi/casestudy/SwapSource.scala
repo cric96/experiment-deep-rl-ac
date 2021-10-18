@@ -1,6 +1,6 @@
 package it.unibo.scafi.casestudy
 
-import cats.data.{NonEmptySet, NonEmptyVector}
+import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
@@ -36,13 +36,11 @@ class SwapSource
   lazy val windowDifferenceSize: Int = 7
   lazy val trajectorySize: Int = 4
   // Learning constants
-  lazy val alpha: TimeVariable[Double] =
-    TimeVariable.independent(0.9) // TODO this should be put in the alchemist configuration
-  lazy val epsilon: TimeVariable[Double] =
-    TimeVariable.independent(0.05) // TODO this should be put in the alchemist configuration
+  lazy val alpha: TimeVariable[Double] = node.get("alpha")
+  lazy val epsilon: TimeVariable[Double] = node.get("epsilon")
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
-  lazy val actions: NonEmptySet[Int] = NonEmptySet.of(0, 1) // TODO this should be put int the alchemist configuration
+  lazy val actions: NonEmptySet[Int] = node.get("actions")
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[List[Int], Int] = qTableStorage.loadOrElse(mid(), Q.zeros[List[Int], Int]()).withDefault(initialValue)
   lazy val qLearning: QLearning[List[Int], Int] = QLearning(actions, alpha, gamma)
