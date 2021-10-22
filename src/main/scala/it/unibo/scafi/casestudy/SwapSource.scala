@@ -19,7 +19,6 @@ class SwapSource
     with Gradients {
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
-  /*implicit lazy val rand: Random = new Random(node.get[java.lang.Double]("episode").intValue())*/
   // Storage
   lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
   lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
@@ -33,8 +32,8 @@ class SwapSource
   lazy val learnCondition: Boolean = node.get[java.lang.Boolean]("learn")
   lazy val initialValue: Double = node.get[Double]("initial_value")
   // Other constant
-  lazy val windowDifferenceSize: Int = 7
-  lazy val trajectorySize: Int = 4
+  lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
+  lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
   // Learning constants
   lazy val alpha: TimeVariable[Double] = node.get("alpha")
   lazy val epsilon: TimeVariable[Double] = node.get("epsilon")

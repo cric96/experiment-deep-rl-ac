@@ -102,7 +102,7 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             if (System.getenv("CI") == "true") {
                 args("-hl", "-t", "2")
             } else {
-                args("-g", "effects/${it.nameWithoutExtension}.aes")
+                args("-g", "src/main/effects/${it.nameWithoutExtension}.aes")
             }
             this.additionalConfiguration()
         }

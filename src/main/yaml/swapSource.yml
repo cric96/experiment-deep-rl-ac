@@ -3,22 +3,24 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   random: &random { formula: 0 }
-  last_greedy_episodes: { formula: 10.0 }
+  last_greedy_episodes: { formula: 5.0 }
   learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
-  greedy_each: { formula: learning_episodes }
+  greedy_each: { formula: learning_episodes / 10 }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
-  episode_length: &episode_length { formula: 120 }
+  episode_length: &episode_length { formula: 80 }
   learn: &learn
     language: scala
     formula: >
       val ep = episode.asInstanceOf[java.lang.Double].intValue;
       val each = greedy_each.asInstanceOf[java.lang.Double].intValue;
       val learn_ep = learning_episodes.asInstanceOf[java.lang.Double].intValue;
-      ep % each != 0 && ep < learn_ep
+      (ep == 0 || ep % each != 0) && ep < learn_ep
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
-  gamma: &gamma { formula: 0.1 }
+  gamma: &gamma { formula: 0.9 }
+  window_size: &window_size { formula: 2 }
+  trajectory_size: &trajectory_size { formula: 4 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
   # PROGRAM VARIABLES
@@ -26,9 +28,9 @@ variables:
 
 ## Time variable
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.independent(0.9)
+  it.unibo.learning.TimeVariable.independent(0.5)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.independent(0.01)
+  it.unibo.learning.TimeVariable.independent(0.05)
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1)
 
@@ -38,7 +40,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
+    parameters: [0, 0, 50, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
     # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
     #type: GeometricGradientRectangle
     #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
@@ -90,10 +92,16 @@ deployments:
         concentration: *epsilon
       - molecule: actions
         concentration: *actions
+      - molecule: window
+        concentration: *window_size
+      - molecule: trajectory
+        concentration: *trajectory_size
       - molecule: left_source
-        concentration: 40
+        concentration: 30
       - molecule: right_source
-        concentration: 59
+        concentration: 9
+      - molecule: source
+        concentration: false
       - molecule: episode_length
         concentration: *episode_length
 export:
