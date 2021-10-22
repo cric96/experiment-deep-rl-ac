@@ -20,8 +20,8 @@ class SwapSource
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
   // Storage
-  lazy val qTableStorage = new LocalStorage[Int](node.get[java.lang.String]("qtable_folder"))
-  lazy val clockTableStorage = new LocalStorage[Int](node.get[java.lang.String]("clock_folder"))
+  lazy val qTableStorage = new LocalStorage[String](node.get[java.lang.String]("qtable_folder"))
+  lazy val clockTableStorage = new LocalStorage[String](node.get[java.lang.String]("clock_folder"))
   def passedTime: Double = alchemistTimestamp.toDouble
   // Variable loaded by alchemist configuration.
   lazy val leftSrc: Int = node.get[Integer]("left_source") // ID of the source at the left of the env (the stable one)
@@ -41,20 +41,21 @@ class SwapSource
   // Q Learning data
   lazy val actions: NonEmptySet[Int] = node.get("actions")
   // Pickle loose the default, so we need to replace it each time the map is loaded
-  lazy val q: Q[List[Int], Int] = qTableStorage.loadOrElse(mid(), Q.zeros[List[Int], Int]()).withDefault(initialValue)
+  lazy val q: Q[List[Int], Int] =
+    qTableStorage.loadOrElse(mid().toString, Q.zeros[List[Int], Int]()).withDefault(initialValue)
   lazy val qLearning: QLearning[List[Int], Int] = QLearning(actions, alpha, gamma)
   // Source condition
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
   // Aggregate Program data
   lazy val hopCountMetric: Metric = () => 1
-  lazy val clock: Clock = clockTableStorage.loadOrElse(mid(), Clock.start)
+  lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
   // Store data
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   lazy val store: EndHandler[Any] = {
     val storeMonitor = new EndHandler[Any](() => {
-      qTableStorage.save(mid(), node.get[Q[List[Int], Int]]("qtable"))
-      clockTableStorage.save(mid(), node.get[Clock]("clock"))
+      qTableStorage.save(mid().toString, node.get[Q[List[Int], Int]]("qtable"))
+      clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
     })
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
     storeMonitor

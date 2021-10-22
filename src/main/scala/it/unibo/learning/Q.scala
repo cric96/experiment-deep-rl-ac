@@ -18,6 +18,22 @@ object Q {
     override def toString(): String = s"QMap { map : ${map.toString()} }"
   }
 
+  object QMap {
+    def merge[S, A](qMaps: QMap[S, A]*): QMap[S, A] = {
+      val total = qMaps.length
+      val keys = qMaps.flatMap(qMap => qMap.map.keySet).toSet
+      val mergedMap = qMaps
+        .map(_.map)
+        .flatMap(map =>
+          keys
+            .map(key => (key, map.get(key)))
+            .collect { case (key, Some(value)) => (key, value) }
+        )
+        .groupMapReduce(_._1)(_._2)(_ + _)
+        .map { case (k, qValue) => (k, qValue / total) }
+      QMap(mergedMap)
+    }
+  }
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit def qRW[S: RW, A: RW]: RW[Q[S, A]] = macroRW[Q[S, A]]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion

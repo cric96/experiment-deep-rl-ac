@@ -1,9 +1,11 @@
 package it.unibo.learning
 
+import it.unibo.learning.Q.QMap
 import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import org.scalatestplus.junit.JUnitRunner
+
 import scala.util.Random
 
 @RunWith(classOf[JUnitRunner])
@@ -37,4 +39,14 @@ class QTest extends AnyFlatSpec with should.Matchers {
     changeDefault(0, 0) shouldBe 10
   }
 
+  "A Q map" should "be marged with the other maps" in {
+    type Q = QMap[Int, Int]
+    val first = new Q(Map((0, 0) -> 2, (1, 1) -> 3))
+    val second = new Q(Map((0, 0) -> 1, (1, 0) -> 1))
+    val third = new Q(Map((1, 0) -> 2))
+    val merged = QMap.merge(first, second, third)
+    assert(merged(0, 0) == 1)
+    assert(merged(1, 1) == 1)
+    assert(merged(1, 0) == 1)
+  }
 }
