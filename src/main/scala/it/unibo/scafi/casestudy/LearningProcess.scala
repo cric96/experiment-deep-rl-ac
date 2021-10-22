@@ -6,7 +6,7 @@ import scala.util.Random
 
 object LearningProcess {
   case class InitialCondition[S, O](state: S, output: O)
-  case class RoundData[S, A, O](q: Q[S, A], output: O, clock: Clock)
+  case class RoundData[S, A, O](q: Q[S, A], output: O, action: A, clock: Clock)
   case class QBuilderStep[S, A, O](q: Q[S, A]) {
     def stateDefinition(state: O => S): RewardDefinitionStep[S, A, O] = RewardDefinitionStep(q, state)
   }
@@ -47,9 +47,9 @@ object LearningProcess {
   )
 
   trait BuilderFinalizer[S, A, O] {
-    def learn(qLearning: QLearning[S, A], epsilon: TimeVariable[Double], clock: Clock)(implicit
+    def learn(qLearning: QLearning.Type[S, A], epsilon: TimeVariable[Double], clock: Clock)(implicit
         rnd: Random
     ): RoundData[S, A, O]
-    def act(q: QLearning[S, A], clock: Clock)(implicit rand: Random): RoundData[S, A, O]
+    def act(q: QLearning.Type[S, A], clock: Clock)(implicit rand: Random): RoundData[S, A, O]
   }
 }

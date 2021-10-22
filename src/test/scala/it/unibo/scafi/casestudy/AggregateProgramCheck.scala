@@ -14,7 +14,7 @@ class AggregateProgramCheck
   implicit lazy val rnd: Random = randomGen
   lazy val learn: Boolean = node.get[java.lang.Boolean]("learn")
   lazy val actions: NonEmptySet[Int] = NonEmptySet.of(10)
-  lazy val qLearning: QLearning[Int, Int] = QLearning[Int, Int](actions, TimeVariable.independent(0.1), 0.9)
+  lazy val qLearning: QLearning.Type[Int, Int] = QLearning.Plain[Int, Int](actions, TimeVariable.independent(0.1), 0.9)
   override def main(): Any = {
     val learningProblem = learningProcess(Q.zeros[Int, Int]())
       .stateDefinition(a => a.toInt)

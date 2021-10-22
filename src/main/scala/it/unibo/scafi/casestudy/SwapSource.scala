@@ -17,6 +17,9 @@ class SwapSource
     with FieldUtils
     with TemporalStateManagement
     with Gradients {
+  // Type alias
+  type State = List[Int]
+  type Action = Int
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
   // Storage
@@ -36,14 +39,15 @@ class SwapSource
   lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
   // Learning constants
   lazy val alpha: TimeVariable[Double] = node.get("alpha")
+  lazy val beta: TimeVariable[Double] = node.get("beta")
   lazy val epsilon: TimeVariable[Double] = node.get("epsilon")
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
-  lazy val actions: NonEmptySet[Int] = node.get("actions")
+  lazy val actions: NonEmptySet[Action] = node.get("actions")
   // Pickle loose the default, so we need to replace it each time the map is loaded
-  lazy val q: Q[List[Int], Int] =
-    qTableStorage.loadOrElse(mid().toString, Q.zeros[List[Int], Int]()).withDefault(initialValue)
-  lazy val qLearning: QLearning[List[Int], Int] = QLearning(actions, alpha, gamma)
+  lazy val q: Q[State, Action] =
+    qTableStorage.loadOrElse(mid().toString, Q.zeros[State, Action]()).withDefault(initialValue)
+  lazy val qLearning: QLearning.Type[State, Action] = QLearning.Hysteretic(actions, alpha, beta, gamma)
   // Source condition
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
@@ -52,7 +56,7 @@ class SwapSource
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
   // Store data
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  lazy val store: EndHandler[Any] = {
+  lazy val store: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](() => {
       qTableStorage.save(mid().toString, node.get[Q[List[Int], Int]]("qtable"))
       clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
@@ -87,11 +91,12 @@ class SwapSource
     node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - roundData.output))
     node.put(s"passed_time", passedTime)
     node.put("src", source)
+    node.put("action", roundData.action)
     // Store update data
     store // lazy value that initialize the output monitor
   }
 
-  private def stateFromWindow(output: Double): List[Int] = {
+  private def stateFromWindow(output: Double): State = {
     val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)

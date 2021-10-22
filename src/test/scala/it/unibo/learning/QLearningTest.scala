@@ -13,21 +13,31 @@ class QLearningTest extends AnyFlatSpec with should.Matchers {
   case object StateA extends State
   case object StateB extends State
   sealed trait Action
-  implicit val order : Order[Action] = Order.allEqual[Action]
+  implicit val order: Order[Action] = Order.allEqual[Action]
   case object ActionA extends Action
   case object ActionB extends Action
   private val actions = NonEmptySet.of[Action](ActionA, ActionB)
-  private val q = Q.zeros[State, Action]()
-    .update(StateA, ActionA, 0).update(StateA, ActionB, 1)
-    .update(StateB, ActionA, 1).update(StateB, ActionB, 3)
+  private val q = Q
+    .zeros[State, Action]()
+    .update(StateA, ActionA, 0)
+    .update(StateA, ActionB, 1)
+    .update(StateB, ActionA, 1)
+    .update(StateB, ActionB, 3)
   private val currentState = StateA
   private val action = ActionA
   private val nextState = StateB
-  private val qLearning = QLearning[State, Action](actions, TimeVariable.independent(0.5), 1)
+  private val gamma = 1
+  private val variableTime = TimeVariable.independent(0.5)
   private val reward = 1
-  "Q Learning process" should "update the Q table accordingly" in {
-    val updatedQ = qLearning.improve((currentState, action, reward, nextState), q, Clock.start)
-    q(currentState, action) != updatedQ(currentState, action)
+
+  def testQLearning(process: QLearning.Type[State, Action], processName: String): Unit = {
+    s"$processName process" should "update the Q table accordingly" in {
+      val updatedQ = process.improve((currentState, action, reward, nextState), q, Clock.start)
+      q(currentState, action) != updatedQ(currentState, action)
+    }
   }
 
+  testQLearning(QLearning.Plain(actions, variableTime, gamma), "Q Learning")
+  testQLearning(QLearning.Hysteretic(actions, variableTime, variableTime, gamma), "Hysteretic Q Learning")
+  testQLearning(QLearning.Distributed(actions, variableTime, gamma), "Distributed Q Learning")
 }

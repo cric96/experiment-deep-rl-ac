@@ -13,7 +13,7 @@ trait HopCountQLearning {
   def source: Boolean
 
   case class HopCountState[S, A](q: Q[S, A], state: S, action: A, output: Double, clock: Clock) {
-    def view: RoundData[S, A, Double] = RoundData(q, output, clock)
+    def view: RoundData[S, A, Double] = RoundData(q, output, action, clock)
   }
 
   def learningProcess[S, A](initialQ: Q[S, A]): LearningProcess.QBuilderStep[S, A, Double] =
@@ -21,7 +21,7 @@ trait HopCountQLearning {
 
   implicit class HopCountFinalizer[S, A](ctx: LearningContext[S, A, Double]) extends BuilderFinalizer[S, A, Double] {
     override def learn(
-        qLearning: QLearning[S, A],
+        qLearning: QLearning.Type[S, A],
         epsilon: TimeVariable[Double],
         clock: Clock
     )(implicit rnd: Random): RoundData[S, A, Double] = {
@@ -54,7 +54,9 @@ trait HopCountQLearning {
       }.view
     }
 
-    override def act(qLearning: QLearning[S, A], clock: Clock)(implicit random: Random): RoundData[S, A, Double] = {
+    override def act(qLearning: QLearning.Type[S, A], clock: Clock)(implicit
+        random: Random
+    ): RoundData[S, A, Double] = {
       val action = Policy.greedy(ctx.q, ctx.initialCondition.state, qLearning.actions)
       val stateEvolution =
         HopCountState(ctx.q, ctx.initialCondition.state, action, ctx.initialCondition.output, clock)
@@ -77,7 +79,7 @@ trait HopCountQLearning {
 
     private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {
       rep(ctx.initialCondition.output) { hopCount =>
-        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)) + 1, action))
+        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)), action) + 1)
       }
     }
   }
