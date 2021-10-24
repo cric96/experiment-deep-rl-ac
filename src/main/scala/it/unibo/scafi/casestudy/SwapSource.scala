@@ -74,7 +74,7 @@ class SwapSource
     val learningProblem = learningProcess(q)
       .stateDefinition(stateFromWindow)
       .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
-      .actionEffectDefinition((output, action) => output + action)
+      .actionEffectDefinition((output, action) => output + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
     val roundData = branch(learnCondition) {
@@ -97,11 +97,14 @@ class SwapSource
   }
 
   private def stateFromWindow(output: Double): State = {
-    val minOutput = minHood(nbr(output))
+    val minOutput = minHood(nbr(output)).toInt
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
-    val diff = minOutput - oldState
-    recentValues(trajectorySize, diff).toList.map(_.toInt)
+    //val diff = (minOutput - oldState).sign
+    val diff = (minOutput - oldState).sign
+    //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
+    recentValues(trajectorySize, diff).toList
+    //List(minOutput).map(_.toInt)
   }
 
   private def rewardSignal(groundTruth: Double, currentValue: Double): Double =

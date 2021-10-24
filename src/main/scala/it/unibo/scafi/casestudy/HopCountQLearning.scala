@@ -79,7 +79,7 @@ trait HopCountQLearning {
 
     private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {
       rep(ctx.initialCondition.output) { hopCount =>
-        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)), action) + 1)
+        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)), action))
       }
     }
   }
