@@ -7,6 +7,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import org.scalatestplus.junit.JUnitRunner
 
+import scala.util.Random
+
 @RunWith(classOf[JUnitRunner])
 class QLearningTest extends AnyFlatSpec with should.Matchers {
   sealed trait State
@@ -29,6 +31,7 @@ class QLearningTest extends AnyFlatSpec with should.Matchers {
   private val gamma = 1
   private val variableTime = TimeVariable.independent(0.5)
   private val reward = 1
+  implicit private val random = new Random()
 
   def testQLearning(process: QLearning.Type[State, Action], processName: String): Unit = {
     s"$processName process" should "update the Q table accordingly" in {

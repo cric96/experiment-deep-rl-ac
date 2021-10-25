@@ -14,9 +14,10 @@ class SwapSource
     with StandardSensors
     with ScafiAlchemistSupport
     with BlockT
+    with BlockG
     with FieldUtils
     with TemporalStateManagement
-    with Gradients {
+    with FixedGradients {
   // Type alias
   type State = List[Int]
   type Action = Int
@@ -52,7 +53,6 @@ class SwapSource
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
   // Aggregate Program data
-  lazy val hopCountMetric: Metric = () => 1
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
   // Store data
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -66,9 +66,9 @@ class SwapSource
   }
   // Aggregate program
   override def main(): Any = {
-    val classicHopCount = classicGradient(source, hopCountMetric) // BASELINE
+    val classicHopCount = hopGradient(source) // BASELINE
     val hopCountWithoutRightSource =
-      classicGradient(mid() == leftSrc, hopCountMetric) // optimal gradient when RIGHT_SRC stops being a source
+      hopGradient(mid() == leftSrc) // optimal gradient when RIGHT_SRC stops being a source
     val refHopCount = if (passedTime >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
     // Learning definition
     val learningProblem = learningProcess(q)
@@ -82,7 +82,17 @@ class SwapSource
     } {
       learningProblem.act(qLearning, clock)
     }
+    val flex = svdGradient()(source = source, () => 1)
+    val rlBasedError = refHopCount - roundData.output
+    val overEstimate =
+      if (rlBasedError > 0) { 1 }
+      else { 0 }
+    val underEstimate =
+      if (rlBasedError < 0) { 1 }
+      else { 0 }
     // Store alchemist info
+    node.put("overestimate", overEstimate)
+    node.put("underestimate", underEstimate)
     node.put("qtable", roundData.q)
     node.put("clock", roundData.clock)
     node.put("classicHopCount", classicHopCount)
@@ -92,6 +102,7 @@ class SwapSource
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)
+    node.put(s"err_flexHopCount", Math.abs(refHopCount - flex))
     // Store update data
     store // lazy value that initialize the output monitor
   }
@@ -101,7 +112,7 @@ class SwapSource
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
     //val diff = (minOutput - oldState).sign
-    val diff = (minOutput - oldState).sign
+    val diff = minOutput - oldState
     //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
     recentValues(trajectorySize, diff).toList
     //List(minOutput).map(_.toInt)

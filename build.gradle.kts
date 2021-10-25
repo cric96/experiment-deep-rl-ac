@@ -17,6 +17,9 @@ plugins {
 
 }
 repositories {
+    maven {
+        url = uri("${projectDir}/libs")
+    }
     mavenCentral()
 }
 
@@ -44,8 +47,7 @@ dependencies {
     testImplementation("org.scalatestplus:junit-4-13_2.13:_")
 }
 tasks.withType<ScalaCompile> {
-
-    scalaCompileOptions.additionalParameters = mutableListOf("-Xfatal-warnings")
+    scalaCompileOptions.additionalParameters = mutableListOf("-Xfatal-warnings", "-feature")
     sourceCompatibility = "1.8"
     targetCompatibility = "1.8"
 }

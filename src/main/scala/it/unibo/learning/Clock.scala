@@ -1,7 +1,7 @@
 package it.unibo.learning
 import upickle.default.{macroRW, ReadWriter => RW}
 
-case class Clock(ticks: Int) {
+case class Clock(ticks: Long) {
   def tick: Clock = this.copy(ticks + 1)
 }
 

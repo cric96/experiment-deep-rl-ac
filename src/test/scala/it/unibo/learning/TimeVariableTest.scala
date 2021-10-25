@@ -22,6 +22,12 @@ class TimeVariableTest extends AnyFlatSpec with should.Matchers {
     assert(dependent.value(clock) != dependent.value(clock.tick))
   }
 
+  "A time dependent variable with exponential decay" should "be influenced by the clock" in {
+    val clock = Clock.start
+    val dependent = TimeVariable.exponentialDecayFunction(aData, factor = 1)
+    assert(dependent.value(clock) != dependent.value(clock.tick))
+  }
+
   "A data" should "be converted in time variable implicitly" in {
     val data = acceptVar(aData)
     aData shouldBe data

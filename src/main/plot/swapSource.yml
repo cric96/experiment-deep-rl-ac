@@ -7,10 +7,11 @@ the_plots_labels:
   - 'err_classicHopCount'
   - 'err_rlbasedHopCount'
   - 'reward'
-  - 'up'
-  - 'down'
+  - 'underEstimate'
+  - 'overEstimate'
+  - 'flex'
 the_plots_formats:
-  - [0,4,5, 7, 8]
+  - [0,4,5,7,8,9]
   #- [0,11,12,13]
 #  - [0,2,3,4,5]
 #y_labels: ['# of requests', '# of requests','','% of utilization of workers']
@@ -20,7 +21,7 @@ line_widths:
   - [2,2,2,2,2,2,2,2,2,2,2]
 default_colors: &default_colors ["black", "black", "orange","red","yellow",
                                  "black", "blue","red",
-                                 "magenta", "magenta", "orange", "green", "brown"]
+                                 "magenta", "brown", "orange", "green", "brown"]
 the_plots_colors:
   - *default_colors
 legend_position:

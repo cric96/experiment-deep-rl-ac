@@ -3,12 +3,12 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   random: &random { formula: 0 }
-  last_greedy_episodes: { formula: 5.0 }
+  last_greedy_episodes: { formula: 35.0 }
   learning_episodes: { formula: 95.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
-  episode_length: &episode_length { formula: 80 }
+  episode_length: &episode_length { formula: 120 }
   learn: &learn
     language: scala
     formula: >
@@ -28,13 +28,16 @@ variables:
 
 ## Time variable
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.independent(0.5)
+  it.unibo.learning.TimeVariable.independent(0.9)
 ## Time variable
 _beta: &beta >
   it.unibo.learning.TimeVariable.independent(0.05)
 
+#_epsilon: &epsilon >
+#  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.5, 1000)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.independent(0.00)
+  it.unibo.learning.TimeVariable.independent(0.01)
+
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)
 
@@ -44,7 +47,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 50, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
+    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
     # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
     #type: GeometricGradientRectangle
     #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
@@ -99,16 +102,18 @@ deployments:
       - molecule: trajectory
         concentration: *trajectory_size
       - molecule: left_source
-        concentration: 30
+        concentration: 40
       - molecule: right_source
-        concentration: 9
+        concentration: 59
       - molecule: source
         concentration: false
       - molecule: episode_length
         concentration: *episode_length
-      - molecule: up
+      - molecule: overestimate
         concentration: 0
-      - molecule: down
+      - molecule: underestimate
+        concentration: 0
+      - molecule: err_flexHopCount
         concentration: 0
 export:
   - time
@@ -130,7 +135,10 @@ export:
   - molecule: reward
     aggregators: [mean]
     value-filter: onlyfinite
-  - molecule: up
+  - molecule: overestimate
     aggregators: [sum]
-  - molecule: down
+  - molecule: overestimate
+    aggregators: [sum]
+  - molecule: err_flexHopCount
+    value-filter: onlyfinite
     aggregators: [sum]
