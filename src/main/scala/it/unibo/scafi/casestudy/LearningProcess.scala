@@ -1,6 +1,6 @@
 package it.unibo.scafi.casestudy
 
-import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
+import it.unibo.learning._
 
 import scala.util.Random
 
@@ -47,9 +47,11 @@ object LearningProcess {
   )
 
   trait BuilderFinalizer[S, A, O] {
-    def learn(qLearning: QLearning.Type[S, A], epsilon: TimeVariable[Double], clock: Clock)(implicit
+    def learn[T](learning: Sars.Type[S, A, T], epsilon: TimeVariable[Double], clock: Clock)(implicit
         rnd: Random
     ): RoundData[S, A, O]
-    def act(q: QLearning.Type[S, A], clock: Clock)(implicit rand: Random): RoundData[S, A, O]
+    def act[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+        rand: Random
+    ): RoundData[S, A, O]
   }
 }

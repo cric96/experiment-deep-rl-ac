@@ -2,9 +2,8 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  random: &random { formula: 0 }
-  last_greedy_episodes: { formula: 35.0 }
-  learning_episodes: { formula: 95.0 }
+  last_greedy_episodes: { formula: 15.0 }
+  learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
@@ -15,7 +14,7 @@ variables:
       val ep = episode.asInstanceOf[java.lang.Double].intValue;
       val each = greedy_each.asInstanceOf[java.lang.Double].intValue;
       val learn_ep = learning_episodes.asInstanceOf[java.lang.Double].intValue;
-      (ep == 0 || ep % each != 0) && ep < learn_ep
+      learn_ep != 0 && (ep == 0 || ep % each != 0) && ep < learn_ep
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
   gamma: &gamma { formula: 0.9 }
@@ -137,7 +136,7 @@ export:
     value-filter: onlyfinite
   - molecule: overestimate
     aggregators: [sum]
-  - molecule: overestimate
+  - molecule: underestimate
     aggregators: [sum]
   - molecule: err_flexHopCount
     value-filter: onlyfinite

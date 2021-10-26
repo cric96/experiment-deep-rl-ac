@@ -13,9 +13,11 @@ object QLearning {
     bestNextValue
   }
 
-  trait Type[S, A] extends ReinforcementLearning[(S, A, Double, S), Q[S, A]] {
-    def actions: NonEmptySet[A]
+  trait Type[S, A] extends Sars.Type[S, A, Q[S, A]] {
+    override def extractQFromTarget(target: Q[S, A]): Q[S, A] = target
+    override def initTargetFromQ(q: Q[S, A]): Q[S, A] = q
   }
+
   case class Plain[S, A](actions: NonEmptySet[A], alpha: TimeVariable[Double], gamma: Double)
       extends QLearning.Type[S, A] {
     override def improve(trajectory: (S, A, Double, S), q: Q[S, A], clock: Clock)(implicit
@@ -27,7 +29,9 @@ object QLearning {
       val update = oldQValue + alpha.value(clock) * rewardTPlus + gamma * bestNextValue - oldQValue
       q.update(stateT, actionT, update)
     }
+
   }
+
   class Hysteretic[S, A](
       val actions: NonEmptySet[A],
       val alpha: TimeVariable[Double],

@@ -48,7 +48,7 @@ class SwapSource
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
     qTableStorage.loadOrElse(mid().toString, Q.zeros[State, Action]()).withDefault(initialValue)
-  lazy val qLearning: QLearning.Type[State, Action] = QLearning.Hysteretic(actions, alpha, beta, gamma)
+  lazy val qLearning = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Source condition
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
@@ -77,15 +77,15 @@ class SwapSource
       .actionEffectDefinition((output, action) => output + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val roundData = branch(learnCondition) {
+    val roundData = mux(learnCondition && !source) {
       learningProblem.learn(qLearning, epsilon, clock)
     } {
       learningProblem.act(qLearning, clock)
     }
-    val flex = svdGradient()(source = source, () => 1)
+    val flex = 0 //svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =
-      if (rlBasedError > 0) { 1 }
+      if (source) { 1 }
       else { 0 }
     val underEstimate =
       if (rlBasedError < 0) { 1 }
@@ -102,7 +102,7 @@ class SwapSource
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)
-    node.put(s"err_flexHopCount", Math.abs(refHopCount - flex))
+    node.put(s"err_flexHopCount", 0 /* Math.abs(refHopCount - flex)*/ )
     // Store update data
     store // lazy value that initialize the output monitor
   }
