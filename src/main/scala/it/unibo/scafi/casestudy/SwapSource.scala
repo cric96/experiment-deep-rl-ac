@@ -82,10 +82,10 @@ class SwapSource
     } {
       learningProblem.act(qLearning, clock)
     }
-    val flex = 0 //svdGradient()(source = source, () => 1)
+    val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =
-      if (source) { 1 }
+      if (rlBasedError > 0) { 1 }
       else { 0 }
     val underEstimate =
       if (rlBasedError < 0) { 1 }
@@ -102,7 +102,7 @@ class SwapSource
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)
-    node.put(s"err_flexHopCount", 0 /* Math.abs(refHopCount - flex)*/ )
+    node.put(s"err_flexHopCount", Math.abs(refHopCount - stateOfTheArt))
     // Store update data
     store // lazy value that initialize the output monitor
   }
