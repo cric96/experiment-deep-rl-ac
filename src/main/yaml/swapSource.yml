@@ -2,8 +2,8 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 15.0 }
-  learning_episodes: { formula: 100.0 }
+  last_greedy_episodes: { formula: 40.0 }
+  learning_episodes: { formula: 500.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
@@ -22,12 +22,14 @@ variables:
   trajectory_size: &trajectory_size { formula: 2 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
+  right_source: &right_source { formula: 'learn ? 59 : 40'}
+  left_source: &left_source { formula: 'learn ? 40 : 59' }
   # PROGRAM VARIABLES
-  stop_right_source: &stop_right_source { formula: 20 }
+  stop_right_source: &stop_right_source { formula: 30 }
 
 ## Time variable
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.independent(0.9)
+  it.unibo.learning.TimeVariable.independent(0.5)
 ## Time variable
 _beta: &beta >
   it.unibo.learning.TimeVariable.independent(0.05)
@@ -40,7 +42,7 @@ _epsilon: &epsilon >
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)
 
-seeds: { scenario: *episode, simulation: *episode }
+seeds: { scenario: 0, simulation: *episode }
 terminate: { type: AfterTime, parameters: [*episode_length] }
 environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
@@ -101,9 +103,9 @@ deployments:
       - molecule: trajectory
         concentration: *trajectory_size
       - molecule: left_source
-        concentration: 40
+        concentration: *left_source
       - molecule: right_source
-        concentration: 59
+        concentration: *right_source
       - molecule: source
         concentration: false
       - molecule: episode_length

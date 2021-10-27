@@ -6,6 +6,7 @@ import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
 import it.unibo.storage.LocalStorage
 
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Random
 
 class SwapSource
@@ -25,6 +26,7 @@ class SwapSource
   implicit lazy val rand: Random = randomGen
   // Storage
   lazy val qTableStorage = new LocalStorage[String](node.get[java.lang.String]("qtable_folder"))
+  lazy val episode: Int = node.get[java.lang.Double]("episode").toInt
   lazy val clockTableStorage = new LocalStorage[String](node.get[java.lang.String]("clock_folder"))
   def passedTime: Double = alchemistTimestamp.toDouble
   // Variable loaded by alchemist configuration.
@@ -45,10 +47,18 @@ class SwapSource
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
   // Q Learning data
   lazy val actions: NonEmptySet[Action] = node.get("actions")
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
+  lazy val qId: String = {
+    val random = new Random(episode)
+    val nodes = alchemistEnvironment.getNodes.iterator().asScala
+    val randomId = random.shuffle(nodes.map(_.getId).toVector)
+    if (learnCondition) { randomId.apply(mid()).toString }
+    else { mid().toString }
+  }
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
-    qTableStorage.loadOrElse(mid().toString, Q.zeros[State, Action]()).withDefault(initialValue)
-  lazy val qLearning = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
+    qTableStorage.loadOrElse(qId, Q.zeros[State, Action]()).withDefault(initialValue)
+  lazy val learningProcess = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Source condition
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
@@ -58,7 +68,7 @@ class SwapSource
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   lazy val store: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](() => {
-      qTableStorage.save(mid().toString, node.get[Q[List[Int], Int]]("qtable"))
+      qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
       clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
     })
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
@@ -78,9 +88,9 @@ class SwapSource
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
     val roundData = mux(learnCondition && !source) {
-      learningProblem.learn(qLearning, epsilon, clock)
+      learningProblem.learn(learningProcess, epsilon, clock)
     } {
-      learningProblem.act(qLearning, clock)
+      learningProblem.act(learningProcess, clock)
     }
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output

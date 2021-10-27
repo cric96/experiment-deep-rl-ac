@@ -133,3 +133,6 @@ qtables/
 clock_test/
 qtables_test/
 data/
+.metals/
+.vscode/
+.ammonite
