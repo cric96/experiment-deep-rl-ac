@@ -1,29 +1,23 @@
 package it.unibo.scafi.casestudy
 
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Clock, Q}
+import it.unibo.learning.{Clock, MonteCarlo, Policy}
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
 
-import scala.jdk.CollectionConverters.IteratorHasAsScala
-import scala.util.Random
-
-class SwapSourceOnline extends SwapSourceLike {
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  override lazy val qId: String = {
-    val random = new Random(episode)
-    val nodes = alchemistEnvironment.getNodes.iterator().asScala
-    val randomId = random.shuffle(nodes.map(_.getId).toVector)
-    if (learnCondition) { randomId.apply(mid()).toString }
-    else { mid().toString }
-  }
+class SwapSourceMonteCarlo extends SwapSourceLike {
+  override lazy val qId: String = "global"
+  lazy val monteCarloLearning: MonteCarlo.Type[State, Action] =
+    MonteCarlo.FirstVisit[State, Action](actions, gamma)
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val endHandler: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](
       sharedLogic = () => {
-        qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
         clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
       },
-      leaderLogic = () => println(s"Episodes: ${episode.toString}"),
+      leaderLogic = () => {
+        println(s"Episodes: ${episode.toString}")
+
+      },
       id = mid()
     )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
@@ -42,11 +36,8 @@ class SwapSourceOnline extends SwapSourceLike {
       .actionEffectDefinition((output, action) => output + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val (roundData, trajectory) = mux(learnCondition && !source) {
-      learningProblem.learn(learningAlgorithm, epsilon, clock)
-    } {
-      learningProblem.actGreedy(learningAlgorithm, clock)
-    }
+    val (roundData, trajectory) =
+      learningProblem.actWith(monteCarloLearning.ops, clock, Policy.softEpsilonGreedy(actions, epsilon))
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =

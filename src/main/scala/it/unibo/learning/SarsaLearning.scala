@@ -2,6 +2,7 @@ package it.unibo.learning
 
 import cats.data.NonEmptySet
 import cats.syntax.all._
+import it.unibo.learning.ReinforcementLearning.Ops
 import monocle.syntax.all._
 
 import scala.util.Random
@@ -10,7 +11,7 @@ object SarsaLearning {
   case class NStepState[S, A](q: Q[S, A], clock: Clock, trajectory: Vector[(S, A, Double, S)])
   case class SarsaState[S, A](q: Q[S, A], oldTrajectory: Option[(S, A, Double, S)])
   trait Type[S, A] extends Sars.Type[S, A, SarsaState[S, A]] {
-    override val ops: Sars.Ops[S, A, SarsaState[S, A]] = new Sars.Ops[S, A, SarsaState[S, A]] {
+    override val ops: Ops[S, A, SarsaState[S, A]] = new Ops[S, A, SarsaState[S, A]] {
       override def extractQFromTarget(target: SarsaState[S, A]): Q[S, A] = target.q
       override def initTargetFromQ(q: Q[S, A]): SarsaState[S, A] = SarsaState(q, None)
     }
@@ -41,7 +42,7 @@ object SarsaLearning {
         .modify(_.tick)
     }
 
-    override val ops: Sars.Ops[S, A, NStepState[S, A]] = new Sars.Ops[S, A, NStepState[S, A]] {
+    override val ops: Ops[S, A, NStepState[S, A]] = new Ops[S, A, NStepState[S, A]] {
       override def extractQFromTarget(target: Aux): Q[S, A] = target.q
       override def initTargetFromQ(q: Q[S, A]): Aux = NStepState(q, Clock.start, Vector.empty)
     }

@@ -1,9 +1,11 @@
 package it.unibo.scafi.casestudy
 
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
+import it.unibo.learning.ReinforcementLearning.Ops
 import it.unibo.learning._
 import it.unibo.scafi.casestudy.LearningProcess.{BuilderFinalizer, LearningContext, RoundData, Trajectory}
 import monocle.syntax.all._
+
 import scala.language.reflectiveCalls
 import scala.util.Random
 
@@ -20,7 +22,7 @@ trait HopCountLearning {
       trajectory: Trajectory[S, A],
       clock: Clock
   ) {
-    def view(learning: Sars.Ops[S, A, T]): (RoundData[S, A, Double], Trajectory[S, A]) =
+    def view(learning: ReinforcementLearning.Ops[S, A, T]): (RoundData[S, A, Double], Trajectory[S, A]) =
       (RoundData(learning.extractQFromTarget(target), output, action, clock), trajectory)
   }
 
@@ -73,10 +75,10 @@ trait HopCountLearning {
 
     override def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
         rand: Random
-    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning, clock, Policy.greedy(learning.actions))
+    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning.ops, clock, Policy.greedy(learning.actions))
 
     override def actWith[T](
-        learningInstance: { val ops: Sars.Ops[S, A, T] },
+        learningInstance: Ops[S, A, T],
         clock: Clock,
         policy: Policy.QBased[S, A]
     )(implicit
@@ -85,7 +87,7 @@ trait HopCountLearning {
       val action = policy(ctx.initialCondition.state, ctx.q, clock)
       val stateEvolution =
         HopCountState[S, A, T](
-          learningInstance.ops.initTargetFromQ(ctx.q),
+          learningInstance.initTargetFromQ(ctx.q),
           ctx.initialCondition.state,
           action,
           ctx.initialCondition.output,
@@ -109,7 +111,7 @@ trait HopCountLearning {
           .replace(stateTPlus)
           .focus(_.trajectory)
           .modify(trajectory => (ev.state, action, reward) :: trajectory.toList)
-      }.view(learningInstance.ops)
+      }.view(learningInstance)
     }
 
     private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {

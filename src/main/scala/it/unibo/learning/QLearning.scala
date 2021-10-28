@@ -2,6 +2,7 @@ package it.unibo.learning
 
 import cats.data.NonEmptySet
 import it.unibo.cats.TypeEnrichment.RichNonEmptyList
+import it.unibo.learning.ReinforcementLearning.Ops
 
 import scala.util.Random
 object QLearning {
@@ -14,7 +15,7 @@ object QLearning {
   }
 
   trait Type[S, A] extends Sars.Type[S, A, Q[S, A]] {
-    override val ops: Sars.Ops[S, A, Q[S, A]] = new Sars.Ops[S, A, Q[S, A]] {
+    override val ops: Ops[S, A, Q[S, A]] = new Ops[S, A, Q[S, A]] {
       override def extractQFromTarget(target: Q[S, A]): Q[S, A] = target
       override def initTargetFromQ(q: Q[S, A]): Q[S, A] = q
     }
