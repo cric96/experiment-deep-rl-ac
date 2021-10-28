@@ -3,8 +3,8 @@ package it.unibo.alchemist.tiggers
 import it.unibo.alchemist.boundary.interfaces.OutputMonitor
 import it.unibo.alchemist.model.interfaces._
 
-class EndHandler[T](logic: () => Unit) extends OutputMonitor[T, Position[_]] {
-  override def finished(environment: Environment[T, Position[_]], time: Time, step: Long): Unit = logic()
+class EndHandler[T](sharedLogic: () => Unit, leaderLogic: () => Unit, id: Int) extends OutputMonitor[T, Position[_]] {
+  override def finished(environment: Environment[T, Position[_]], time: Time, step: Long): Unit = sharedLogic()
 
   override def initialized(environment: Environment[T, Position[_]]): Unit = {}
 

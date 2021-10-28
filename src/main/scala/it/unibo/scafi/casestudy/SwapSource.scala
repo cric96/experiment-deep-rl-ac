@@ -58,7 +58,7 @@ class SwapSource
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
     qTableStorage.loadOrElse(qId, Q.zeros[State, Action]()).withDefault(initialValue)
-  lazy val learningProcess = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
+  lazy val learningAlgorithm = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Source condition
   override def source: Boolean =
     if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
@@ -67,10 +67,14 @@ class SwapSource
   // Store data
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   lazy val store: EndHandler[_] = {
-    val storeMonitor = new EndHandler[Any](() => {
-      qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
-      clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
-    })
+    val storeMonitor = new EndHandler[Any](
+      sharedLogic = () => {
+        qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
+        clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
+      },
+      leaderLogic = () => {},
+      id = mid()
+    )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
     storeMonitor
   }
@@ -87,10 +91,10 @@ class SwapSource
       .actionEffectDefinition((output, action) => output + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val (roundData, _) = mux(learnCondition && !source) {
-      learningProblem.learn(learningProcess, epsilon, clock)
+    val (roundData, trajectory) = mux(learnCondition && !source) {
+      learningProblem.learn(learningAlgorithm, epsilon, clock)
     } {
-      learningProblem.act(learningProcess, clock)
+      learningProblem.act(learningAlgorithm, clock)
     }
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
@@ -113,6 +117,7 @@ class SwapSource
     node.put("src", source)
     node.put("action", roundData.action)
     node.put(s"err_flexHopCount", Math.abs(refHopCount - stateOfTheArt))
+    node.put("trajectory", trajectory)
     // Store update data
     store // lazy value that initialize the output monitor
   }
