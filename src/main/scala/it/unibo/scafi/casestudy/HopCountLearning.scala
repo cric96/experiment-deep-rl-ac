@@ -33,7 +33,8 @@ trait HopCountLearning {
         epsilon: TimeVariable[Double],
         clock: Clock
     )(implicit rnd: Random): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = Policy.greedy(ctx.q, ctx.initialCondition.state, learning.actions)
+      val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q, clock)
+      val epsilonGreedy = Policy.epsilonGreedy[S, A](learning.actions, epsilon)
       val stateEvolution =
         HopCountState[S, A, learning.Aux](
           learning.initTargetFromQ(ctx.q),
@@ -47,19 +48,13 @@ trait HopCountLearning {
         val nextOutput = hopCount(ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val reward = ctx.rewardSignal(nextOutput)
+        // Agent update
         val updateTargetLearning = learning.improve(
           (ev.state, ev.action, reward, stateTPlus),
           ev.target,
           ev.clock
         )
-        // Agent update
-        val nextAction =
-          Policy.epsilonGreedy(
-            learning.extractQFromTarget(ev.target),
-            stateTPlus,
-            learning.actions,
-            epsilon.value(ev.clock)
-          )
+        val nextAction = epsilonGreedy(stateTPlus, learning.extractQFromTarget(ev.target), clock)
         ev
           .focus(_.target)
           .replace(updateTargetLearning)
@@ -79,7 +74,8 @@ trait HopCountLearning {
     override def act[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
         rand: Random
     ): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = Policy.greedy(ctx.q, ctx.initialCondition.state, learning.actions)
+      val greedy = Policy.greedy[S, A](learning.actions)
+      val action = greedy(ctx.initialCondition.state, ctx.q, clock)
       val stateEvolution =
         HopCountState[S, A, T](
           learning.initTargetFromQ(ctx.q),
@@ -93,7 +89,7 @@ trait HopCountLearning {
         val nextOutput = hopCount(ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val nextAction =
-          Policy.greedy(learning.extractQFromTarget(ev.target), stateTPlus, learning.actions)
+          greedy(ctx.initialCondition.state, ctx.q, clock)
         ev
           .focus(_.clock)
           .modify(_.tick)
