@@ -54,9 +54,7 @@ deployments:
     #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
     #           # nodes, x, y, sizex, sizey, lambda, step, horizontal, decreasing
     programs:
-      - time-distribution:
-          type: ExponentialTime
-          parameters: [1]
+      - time-distribution: 1
         type: Event
         actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSource, 5.0] }
       - program: send
