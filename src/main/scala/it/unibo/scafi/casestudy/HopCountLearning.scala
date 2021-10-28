@@ -16,7 +16,6 @@ trait HopCountLearning {
       target: T,
       state: S,
       action: A,
-      reward: Double,
       output: Double,
       trajectory: Trajectory[S, A],
       clock: Clock
@@ -40,7 +39,6 @@ trait HopCountLearning {
           learning.initTargetFromQ(ctx.q),
           ctx.initialCondition.state,
           action,
-          0.0,
           ctx.initialCondition.output,
           Vector.empty,
           clock

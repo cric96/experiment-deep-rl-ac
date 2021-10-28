@@ -7,7 +7,7 @@ variables:
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
-  episode_length: &episode_length { formula: 120 }
+  episode_length: &episode_length { formula: 60 }
   learn: &learn
     language: scala
     formula: >
@@ -25,7 +25,7 @@ variables:
   right_source: &right_source { formula: 'learn ? 59 : 40'}
   left_source: &left_source { formula: 'learn ? 40 : 59' }
   # PROGRAM VARIABLES
-  stop_right_source: &stop_right_source { formula: 30 }
+  stop_right_source: &stop_right_source { formula: 20 }
 
 ## Time variable
 _alpha: &alpha >

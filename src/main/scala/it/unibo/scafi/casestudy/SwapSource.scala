@@ -1,6 +1,7 @@
 package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
+import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
@@ -72,7 +73,16 @@ class SwapSource
         qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
         clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
       },
-      leaderLogic = () => {},
+      leaderLogic = () => {
+        val nodes = alchemistEnvironment.getNodes.iterator().asScala.toVector
+        val managers = nodes.map(new SimpleNodeManager[Any](_))
+        val world = nodes.zip(managers)
+        val states = world.map { case (_, m) => m.get[Seq[(State, Action, Double)]]("trajectory") }
+          .flatMap(data => data.flatMap(_._1))
+          .distinct
+          .sorted
+        println(states)
+      },
       id = mid()
     )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
@@ -123,13 +133,13 @@ class SwapSource
   }
 
   private def stateFromWindow(output: Double): State = {
-    val minOutput = minHood(nbr(output)).toInt
+    val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
     //val diff = (minOutput - oldState).sign
     val diff = minOutput - oldState
     //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
-    recentValues(trajectorySize, diff).toList
+    recentValues(trajectorySize, diff).toList.map(_.toInt)
     //List(minOutput).map(_.toInt)
   }
 
