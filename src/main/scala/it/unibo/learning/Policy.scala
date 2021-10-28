@@ -6,7 +6,7 @@ import it.unibo.cats.TypeEnrichment._
 import scala.util.Random
 
 object Policy {
-  type Type[S, C, A] = ((S, C, Clock) => A)
+  type Type[S, C, A] = (S, C, Clock) => A
   type QBased[S, A] = Type[S, Q[S, A], A]
 
   def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _, _) => {
