@@ -6,15 +6,31 @@ variables:
   episodes: &episodes { formula: 10 }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
   episode_length: &episode_length { formula: 10 }
-  stop_learning_at: { formula: 'episodes - 5' }
-  learn: &learn { formula: 'episode % 100 == 0' }
+  learn: &learn { formula: true }
   range: &range { formula: 8.0 }
   initial_value: &initial_value { formula: 0.0 }
+  window_size: &window_size { formula: 3 }
+  trajectory_size: &trajectory_size { formula: 2 }
   gamma: &gamma { formula: 0.9 }
   qtable_folder: &qtable_folder { formula: "'\"qtables_test\"'" }
   clock_folder: &clock_folder { formula: "'\"clock_test\"'" }
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 2 }
+
+## Time variable
+_alpha: &alpha >
+  it.unibo.learning.TimeVariable.independent(0.5)
+## Time variable
+_beta: &beta >
+  it.unibo.learning.TimeVariable.independent(0.05)
+
+#_epsilon: &epsilon >
+#  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.5, 1000)
+_epsilon: &epsilon >
+  it.unibo.learning.TimeVariable.independent(0.01)
+
+_actions: &actions >
+  cats.data.NonEmptySet.of(0, 1, 2)
 
 seeds: { scenario: *random, simulation: *random }
 terminate: { type: AfterTime, parameters: [*episode_length] }
@@ -58,12 +74,24 @@ deployments:
         concentration: *stop_right_source
       - molecule: gamma
         concentration: *gamma
+      - molecule: window
+        concentration: *window_size
+      - molecule: trajectory
+        concentration: *trajectory_size
       - molecule: initial_value
         concentration: *initial_value
       - molecule: qtable_folder
         concentration: *qtable_folder
       - molecule: clock_folder
         concentration: *clock_folder
+      - molecule: alpha
+        concentration: *alpha
+      - molecule: beta
+        concentration: *beta
+      - molecule: epsilon
+        concentration: *epsilon
+      - molecule: actions
+        concentration: *actions
       - molecule: left_source
         concentration: 40
       - molecule: right_source

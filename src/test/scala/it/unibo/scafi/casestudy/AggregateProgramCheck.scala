@@ -21,7 +21,7 @@ class AggregateProgramCheck
       .rewardDefinition(a => a) //fake reward
       .actionEffectDefinition((out, a) => a) //for testing it return the action
       .initialConditionDefinition(0, Double.PositiveInfinity)
-    val result = if (learn) {
+    val (result, _) = if (learn) {
       learningProblem.learn(qLearning, TimeVariable.independent(0.1), Clock.start)
     } else {
       learningProblem.act(qLearning, Clock.start)
