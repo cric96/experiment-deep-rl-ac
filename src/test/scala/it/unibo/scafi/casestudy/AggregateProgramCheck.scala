@@ -6,7 +6,7 @@ import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
 import scala.util.Random
 class AggregateProgramCheck
     extends AggregateProgram
-    with HopCountQLearning
+    with HopCountLearning
     with StandardSensors
     with ScafiAlchemistSupport
     with Gradients {

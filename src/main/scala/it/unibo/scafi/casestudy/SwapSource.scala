@@ -11,7 +11,7 @@ import scala.util.Random
 
 class SwapSource
     extends AggregateProgram
-    with HopCountQLearning
+    with HopCountLearning
     with StandardSensors
     with ScafiAlchemistSupport
     with BlockT

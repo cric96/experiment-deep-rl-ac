@@ -7,7 +7,7 @@ import monocle.syntax.all._
 
 import scala.util.Random
 
-trait HopCountQLearning {
+trait HopCountLearning {
   self: AggregateProgram =>
   // TEMPLATE METHOD
   def source: Boolean
