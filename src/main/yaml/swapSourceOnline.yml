@@ -56,7 +56,7 @@ deployments:
     programs:
       - time-distribution: 1
         type: Event
-        actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSource, 5.0] }
+        actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSourceOnline, 5.0] }
       - program: send
 
     contents:

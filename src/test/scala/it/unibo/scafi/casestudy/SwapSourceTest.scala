@@ -15,7 +15,7 @@ import org.scalatest.BeforeAndAfterEach
 @RunWith(classOf[JUnitRunner])
 @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of alchemist molecule management
 class SwapSourceTest extends AnyFlatSpec with should.Matchers with BeforeAndAfterEach {
-  val simulationPath: Path = os.pwd / "src" / "test" / "yaml" / "swapSource.yml"
+  val simulationPath: Path = os.pwd / "src" / "test" / "yaml" / "swapSourceOnline.yml"
   val qTables = new LocalStorage[Int]("qtables_test")
   val clock = new LocalStorage[Int]("clock_test")
   private def clean(): Unit = {
