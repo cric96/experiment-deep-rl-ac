@@ -51,8 +51,12 @@ object LearningProcess {
     def learn[T](learning: Sars.Type[S, A, T], epsilon: TimeVariable[Double], clock: Clock)(implicit
         rnd: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
-    def act[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+    def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
         rand: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
+    def actWith[T](learning: { val ops: Sars.Ops[S, A, T] }, clock: Clock, policy: Policy.QBased[S, A])(implicit
+        rand: Random
+    ): (RoundData[S, A, O], Trajectory[S, A])
+
   }
 }

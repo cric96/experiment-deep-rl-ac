@@ -14,8 +14,10 @@ object QLearning {
   }
 
   trait Type[S, A] extends Sars.Type[S, A, Q[S, A]] {
-    override def extractQFromTarget(target: Q[S, A]): Q[S, A] = target
-    override def initTargetFromQ(q: Q[S, A]): Q[S, A] = q
+    override val ops: Sars.Ops[S, A, Q[S, A]] = new Sars.Ops[S, A, Q[S, A]] {
+      override def extractQFromTarget(target: Q[S, A]): Q[S, A] = target
+      override def initTargetFromQ(q: Q[S, A]): Q[S, A] = q
+    }
   }
 
   case class Plain[S, A](actions: NonEmptySet[A], alpha: TimeVariable[Double], gamma: Double)

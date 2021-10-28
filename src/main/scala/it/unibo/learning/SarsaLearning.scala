@@ -10,14 +10,15 @@ object SarsaLearning {
   case class NStepState[S, A](q: Q[S, A], clock: Clock, trajectory: Vector[(S, A, Double, S)])
   case class SarsaState[S, A](q: Q[S, A], oldTrajectory: Option[(S, A, Double, S)])
   trait Type[S, A] extends Sars.Type[S, A, SarsaState[S, A]] {
-    override def extractQFromTarget(target: SarsaState[S, A]): Q[S, A] = target.q
-    override def initTargetFromQ(q: Q[S, A]): SarsaState[S, A] = SarsaState(q, None)
+    override val ops: Sars.Ops[S, A, SarsaState[S, A]] = new Sars.Ops[S, A, SarsaState[S, A]] {
+      override def extractQFromTarget(target: SarsaState[S, A]): Q[S, A] = target.q
+      override def initTargetFromQ(q: Q[S, A]): SarsaState[S, A] = SarsaState(q, None)
+    }
+
   }
   // TODO check
   case class NStep[S, A](actions: NonEmptySet[A], alpha: TimeVariable[Double], gamma: Double, trajectorySize: Int)
       extends Sars.Type[S, A, NStepState[S, A]] {
-    override def extractQFromTarget(target: Aux): Q[S, A] = target.q
-    override def initTargetFromQ(q: Q[S, A]): Aux = NStepState(q, Clock.start, Vector.empty)
     override def improve(trajectory: (S, A, Double, S), target: NStepState[S, A], clock: Clock)(implicit
         rand: Random
     ): NStepState[S, A] = {
@@ -38,6 +39,11 @@ object SarsaLearning {
         .replace(trajectories)
         .focus(_.clock)
         .modify(_.tick)
+    }
+
+    override val ops: Sars.Ops[S, A, NStepState[S, A]] = new Sars.Ops[S, A, NStepState[S, A]] {
+      override def extractQFromTarget(target: Aux): Q[S, A] = target.q
+      override def initTargetFromQ(q: Q[S, A]): Aux = NStepState(q, Clock.start, Vector.empty)
     }
   }
   // TODO check

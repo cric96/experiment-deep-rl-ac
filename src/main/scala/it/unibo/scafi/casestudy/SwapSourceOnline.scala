@@ -19,7 +19,7 @@ class SwapSourceOnline extends SwapSourceLike {
     val (roundData, trajectory) = mux(learnCondition && !source) {
       learningProblem.learn(learningAlgorithm, epsilon, clock)
     } {
-      learningProblem.act(learningAlgorithm, clock)
+      learningProblem.actGreedy(learningAlgorithm, clock)
     }
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output

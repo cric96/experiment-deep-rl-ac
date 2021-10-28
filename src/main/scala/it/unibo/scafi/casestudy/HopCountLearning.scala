@@ -4,7 +4,7 @@ import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning._
 import it.unibo.scafi.casestudy.LearningProcess.{BuilderFinalizer, LearningContext, RoundData, Trajectory}
 import monocle.syntax.all._
-
+import scala.language.reflectiveCalls
 import scala.util.Random
 
 trait HopCountLearning {
@@ -20,7 +20,7 @@ trait HopCountLearning {
       trajectory: Trajectory[S, A],
       clock: Clock
   ) {
-    def view(learning: Sars.Type[S, A, T]): (RoundData[S, A, Double], Trajectory[S, A]) =
+    def view(learning: Sars.Ops[S, A, T]): (RoundData[S, A, Double], Trajectory[S, A]) =
       (RoundData(learning.extractQFromTarget(target), output, action, clock), trajectory)
   }
 
@@ -36,12 +36,12 @@ trait HopCountLearning {
       val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q, clock)
       val epsilonGreedy = Policy.epsilonGreedy[S, A](learning.actions, epsilon)
       val stateEvolution =
-        HopCountState[S, A, learning.Aux](
-          learning.initTargetFromQ(ctx.q),
+        HopCountState[S, A, learning.ops.Aux](
+          learning.ops.initTargetFromQ(ctx.q),
           ctx.initialCondition.state,
           action,
           ctx.initialCondition.output,
-          Vector.empty,
+          List.empty,
           clock
         )
       rep(stateEvolution) { ev =>
@@ -54,7 +54,7 @@ trait HopCountLearning {
           ev.target,
           ev.clock
         )
-        val nextAction = epsilonGreedy(stateTPlus, learning.extractQFromTarget(ev.target), clock)
+        val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target), clock)
         ev
           .focus(_.target)
           .replace(updateTargetLearning)
@@ -67,29 +67,37 @@ trait HopCountLearning {
           .focus(_.state)
           .replace(stateTPlus)
           .focus(_.trajectory)
-          .modify(trajectory => trajectory :+ (ev.state, action, reward))
-      }.view(learning)
+          .modify(trajectory => (ev.state, action, reward) :: trajectory.toList)
+      }.view(learning.ops)
     }
 
-    override def act[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+    override def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+        rand: Random
+    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning, clock, Policy.greedy(learning.actions))
+
+    override def actWith[T](
+        learningInstance: { val ops: Sars.Ops[S, A, T] },
+        clock: Clock,
+        policy: Policy.QBased[S, A]
+    )(implicit
         rand: Random
     ): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val greedy = Policy.greedy[S, A](learning.actions)
-      val action = greedy(ctx.initialCondition.state, ctx.q, clock)
+      val action = policy(ctx.initialCondition.state, ctx.q, clock)
       val stateEvolution =
         HopCountState[S, A, T](
-          learning.initTargetFromQ(ctx.q),
+          learningInstance.ops.initTargetFromQ(ctx.q),
           ctx.initialCondition.state,
           action,
           ctx.initialCondition.output,
-          Vector.empty,
+          List.empty,
           clock = clock
         )
       rep(stateEvolution) { ev =>
         val nextOutput = hopCount(ev.action, ctx)
+        val reward = ctx.rewardSignal(nextOutput)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val nextAction =
-          greedy(ctx.initialCondition.state, ctx.q, clock)
+          policy(ctx.initialCondition.state, ctx.q, clock)
         ev
           .focus(_.clock)
           .modify(_.tick)
@@ -99,7 +107,9 @@ trait HopCountLearning {
           .replace(nextAction)
           .focus(_.state)
           .replace(stateTPlus)
-      }.view(learning)
+          .focus(_.trajectory)
+          .modify(trajectory => (ev.state, action, reward) :: trajectory.toList)
+      }.view(learningInstance.ops)
     }
 
     private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {
