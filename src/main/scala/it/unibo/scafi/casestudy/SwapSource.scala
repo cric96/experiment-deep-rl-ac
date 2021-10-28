@@ -87,7 +87,7 @@ class SwapSource
       .actionEffectDefinition((output, action) => output + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val roundData = mux(learnCondition && !source) {
+    val (roundData, _) = mux(learnCondition && !source) {
       learningProblem.learn(learningProcess, epsilon, clock)
     } {
       learningProblem.act(learningProcess, clock)
