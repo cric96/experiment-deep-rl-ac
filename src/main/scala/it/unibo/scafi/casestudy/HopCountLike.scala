@@ -53,6 +53,8 @@ trait HopCountLike
   lazy val learningAlgorithm = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Aggregate Program data
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
+  // Constants
+  val maxDiff = 100
   // Store data
   def endHandler: EndHandler[_]
 
@@ -66,7 +68,10 @@ trait HopCountLike
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
     //val diff = (minOutput - oldState).sign
-    val diff = minOutput - oldState
+    val diff = (minOutput - oldState) match {
+      case diff if Math.abs(diff) > maxDiff => maxDiff * diff.sign
+      case diff                             => diff
+    }
     //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
     recentValues(trajectorySize, diff).toList.map(_.toInt)
     //List(minOutput).map(_.toInt)

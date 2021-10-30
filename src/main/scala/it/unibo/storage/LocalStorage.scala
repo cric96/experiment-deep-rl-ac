@@ -16,5 +16,11 @@ class LocalStorage[K: Show](globalName: String) {
     os.makeDir.all(wd)
     os.write.over(wd / Show[K].show(key), upickle.default.write(data))
   }
+
+  def saveRaw(key: K, data: String): Unit = {
+    os.makeDir.all(wd)
+    os.write.over(wd / Show[K].show(key), data)
+  }
+
   def clean(): Unit = os.remove.all(wd)
 }

@@ -14,6 +14,6 @@ object Stochastic {
 
   def sampleFrom[A](iterable: NonEmptyList[(A, Double)])(implicit random: Random): A = {
     val prob = random.nextDouble()
-    iterable.sortBy(_._2).find(_._2 < prob).getOrElse(iterable.head)._1
+    iterable.find(_._2 > prob).getOrElse(iterable.head)._1
   }
 }

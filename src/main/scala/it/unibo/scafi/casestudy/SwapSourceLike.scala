@@ -1,10 +1,4 @@
 package it.unibo.scafi.casestudy
-import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
-import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Clock, Q}
-
-import scala.jdk.CollectionConverters.IteratorHasAsScala
-import scala.util.Random
 
 trait SwapSourceLike extends HopCountLike {
   // Variable loaded by alchemist configuration.

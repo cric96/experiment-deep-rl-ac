@@ -49,4 +49,8 @@ object Policy {
         }
       Stochastic.sampleFrom(NonEmptyList.fromListUnsafe(actionsWithProb))
   }
+
+  def softFixedEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit
+      rnd: Random
+  ): QBased[S, A] = softEpsilonGreedy(actions, TimeVariable.independent(epsilonT))
 }
