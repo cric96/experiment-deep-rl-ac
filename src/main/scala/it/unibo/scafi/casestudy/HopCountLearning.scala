@@ -89,7 +89,7 @@ trait HopCountLearning {
         val nextOutput = hopCount(ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val nextAction =
-          greedy(ctx.initialCondition.state, ctx.q, clock)
+          greedy(stateTPlus, learning.extractQFromTarget(ev.target), clock)
         ev
           .focus(_.clock)
           .modify(_.tick)

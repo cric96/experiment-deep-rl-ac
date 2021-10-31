@@ -2,8 +2,8 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 0.0 }
-  learning_episodes: { formula: 2.0 }
+  last_greedy_episodes: { formula: 10.0 }
+  learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
