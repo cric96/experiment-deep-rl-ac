@@ -1,8 +1,10 @@
 package it.unibo.scafi.casestudy
 
+import cats.Show
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Clock, MonteCarlo, Policy}
+import it.unibo.learning.Q.QMap
+import it.unibo.learning.{Clock, MonteCarlo, Policy, TimeVariable}
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
@@ -24,14 +26,16 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
         val estimations = qTableStorage.loadOrElse("estimation", defaultEstimation)
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
         val managers = nodes.map(new SimpleNodeManager(_))
-        val trajectories = managers.map(node => (node.get[Seq[(State, Action, Double)]]("trajectory")))
-
+        val trajectories =
+          randomGen.shuffle(managers.map(node => (node.get[Seq[(State, Action, Double)]]("trajectory"))))
         val (qUpdate, estimationUpdate) = trajectories.foldLeft((q, estimations)) {
           case ((q, estimation), trajectory) =>
             val (qUpdated, trace) = monteCarloLearning.improve(trajectory, (q, estimation), Clock.start)
             (qUpdated, trace)
         }
+        implicit def listShow[A]: Show[List[A]] = (t: List[A]) => t.mkString(",") // for pretty printing
         qTableStorage.save("global", qUpdate)
+        qTableStorage.saveRaw("global.csv", QMap.asCsv(qUpdate).getOrElse(""))
         qTableStorage.save("estimation", estimationUpdate)
       },
       id = mid()
@@ -47,18 +51,17 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
       hopGradient(mid() == leftSrc) // optimal gradient when RIGHT_SRC stops being a source
     val refHopCount = if (passedTime >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
     // Learning definition
-    val learningProblem = learningProcess(q)
-      .stateDefinition(stateFromWindow)
-      .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
-      .actionEffectDefinition((output, action) => output + action)
-      .initialConditionDefinition(List.empty, Double.PositiveInfinity)
+    val problem = learningProblem(refHopCount.toInt)
     // RL Program execution
-    val (roundData, trajectory) =
-      learningProblem.actWith(
+    val epsilon =
+      TimeVariable.exponentialDecayFunction(zeroBasedEpsilon, 100).value(Clock(episode))
+    val (roundData, trajectory) = {
+      problem.actWith(
         monteCarloLearning.ops,
         clock,
-        Policy.softFixedEpsilonGreedy(actions, zeroBasedEpsilon / episode)
+        Policy.softFixedEpsilonGreedy(actions, epsilon)
       )
+    }
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =

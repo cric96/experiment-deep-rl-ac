@@ -63,6 +63,12 @@ trait HopCountLike
   final override def main(): Any =
     (aggregateProgram(), endHandler)
 
+  protected def learningProblem(reference: Int) = learningProcess(q)
+    .stateDefinition(stateFromWindow)
+    .rewardDefinition(output => rewardSignal(reference, output))
+    .actionEffectDefinition((output, action) => output + action)
+    .initialConditionDefinition(List.empty, Double.PositiveInfinity)
+
   protected def stateFromWindow(output: Double): State = {
     val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)

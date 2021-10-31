@@ -29,7 +29,7 @@ object MonteCarlo {
         clock: Clock
     )(implicit rand: Random): (Q[S, A], Map[(S, A), (Double, Int)]) = {
       val (q, oldEstimation) = target
-      val returns = trajectory.scanLeft(0.0) { case (g, (s, a, r)) => gamma * g + r }
+      val returns = trajectory.scanLeft(0.0) { case (g, (_, _, r)) => gamma * g + r }
       val (qUpdated, _, estimation) =
         (trajectory.zip(returns)).reverse.foldLeft((q, Set.empty[(S, A)], oldEstimation)) {
           case (acc @ (q, visited, estimation), ((s, a, _), g)) =>

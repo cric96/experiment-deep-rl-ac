@@ -1,4 +1,5 @@
 package it.unibo.learning
+import cats.Show
 import upickle.default.{macroRW, ReadWriter => RW}
 import monocle.syntax.all._
 sealed trait Q[S, A] extends ((S, A) => Double) {
@@ -32,6 +33,13 @@ object Q {
         .groupMapReduce(_._1)(_._2)(_ + _)
         .map { case (k, qValue) => (k, qValue / total) }
       QMap(mergedMap)
+    }
+    def asCsv[S: Show, A: Show](q: Q[S, A]): Option[String] = q match {
+      case QMap(q) =>
+        Some(q.map { case ((state, action), value) =>
+          s"(${Show[S].show(state)}) ${Show[A].show(action)} ${value.toString}"
+        }.mkString("\n"))
+      case _ => None
     }
   }
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
