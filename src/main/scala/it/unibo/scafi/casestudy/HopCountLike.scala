@@ -66,7 +66,7 @@ trait HopCountLike
   protected def learningProblem(reference: Int) = learningProcess(q)
     .stateDefinition(stateFromWindow)
     .rewardDefinition(output => rewardSignal(reference, output))
-    .actionEffectDefinition((output, action) => output + action)
+    .actionEffectDefinition((output, action) => output + action + 1)
     .initialConditionDefinition(List.empty, Double.PositiveInfinity)
 
   protected def stateFromWindow(output: Double): State = {

@@ -34,6 +34,18 @@ object Q {
         .map { case (k, qValue) => (k, qValue / total) }
       QMap(mergedMap)
     }
+    def mergeMax[S, A](qMaps: QMap[S, A]*): QMap[S, A] = {
+      val keys = qMaps.flatMap(qMap => qMap.map.keySet).toSet
+      val mergedMap = qMaps
+        .map(_.map)
+        .flatMap(map =>
+          keys
+            .map(key => (key, map.get(key)))
+            .collect { case (key, Some(value)) => (key, value) }
+        )
+        .groupMapReduce(_._1)(_._2)(Math.max)
+      QMap(mergedMap)
+    }
     def asCsv[S: Show, A: Show](q: Q[S, A]): Option[String] = q match {
       case QMap(q) =>
         Some(q.map { case ((state, action), value) =>

@@ -11,5 +11,7 @@ df_m = df.copy()
 df_m = df_m.groupby(['STATE', 'ACTION']).sum()
 df_m = df_m.unstack(level=0)
 fig, ax = plt.subplots(figsize=(40, 9))
-sb.heatmap(df_m, cmap="Blues",  cbar_kws={"shrink": .8})
+sb.heatmap(df_m, cmap="Blues",  cbar_kws={"shrink": .8}
+#,annot=True
+)
 plt.show()

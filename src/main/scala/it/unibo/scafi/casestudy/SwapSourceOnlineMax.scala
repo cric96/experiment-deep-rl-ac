@@ -3,17 +3,15 @@ package it.unibo.scafi.casestudy
 import cats.Show
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.tiggers.EndHandler
+import it.unibo.learning.Clock
 import it.unibo.learning.Q.QMap
-import it.unibo.learning.{Clock, MonteCarlo, Policy, TimeVariable}
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
-
+import it.unibo.cats.TypeEnrichment._
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceMonteCarlo extends SwapSourceLike {
+class SwapSourceOnlineMax extends SwapSourceLike {
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val qId: String = "global"
-  val factor = 10
-  lazy val monteCarloLearning: MonteCarlo.Type[State, Action] =
-    MonteCarlo.FirstVisit[State, Action](actions, gamma)
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val endHandler: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](
@@ -21,32 +19,27 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
         clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
       },
       leaderLogic = () => {
-        val epsilon =
-          TimeVariable.exponentialDecayFunction(zeroBasedEpsilon, factor).value(Clock(episode))
-        println(s"Episodes: ${episode.toString}, epsilon: ${epsilon.toString}")
-        val defaultEstimation: Map[(State, Action), (Double, Int)] =
-          Map.empty[(State, Action), (Double, Int)].withDefaultValue((0.0, 0))
-        val estimations = qTableStorage.loadOrElse("estimation", defaultEstimation)
+        println(s"episode: ${episode.toString}, epsilon at start: ${epsilon.value(clock).toString}")
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
-        val managers = nodes.map(new SimpleNodeManager(_))
-        val trajectories =
-          randomGen.shuffle(managers.map(node => (node.get[Seq[(State, Action, Double)]]("trajectory"))))
-        val (qUpdate, estimationUpdate) = trajectories.foldLeft((q, estimations)) {
-          case ((q, estimation), trajectory) =>
-            val (qUpdated, trace) = monteCarloLearning.improve(trajectory, (q, estimation), Clock.start)
-            (qUpdated, trace)
-        }
+        val managers =
+          nodes.filter(node => node.getId != rightSrc && node.getId != leftSrc).map(new SimpleNodeManager(_))
+        val qtables = managers.map(_.get[QMap[List[Int], Int]]("qtable"))
+        val maxQTable = QMap.mergeMax(qtables: _*)
         implicit def listShow[A]: Show[List[A]] = (t: List[A]) => t.mkString(",") // for pretty printing
-        qTableStorage.save("global", qUpdate)
-        qTableStorage.saveRaw("global.csv", QMap.asCsv(qUpdate).getOrElse(""))
-        qTableStorage.save("estimation", estimationUpdate)
+        qTableStorage.saveRaw("global.csv", QMap.asCsv(maxQTable).getOrElse(""))
+        qTableStorage.save(qId, QMap.mergeMax(qtables: _*))
+        val states = maxQTable.map.keySet.map(_._1)
+        val actionsGreedy =
+          states.map(s =>
+            s -> actions.map(a => a -> maxQTable.withDefault(initialValue)(s, a)).toNonEmptyList.maxBy(_._2)
+          )
+        println(actionsGreedy.map { case (s, (a, r)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
       },
       id = mid()
     )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
     storeMonitor
   }
-  lazy val zeroBasedEpsilon = epsilon.value(Clock.start)
   // Aggregate program
   override def aggregateProgram(): RoundData[State, Action, Double] = {
     val classicHopCount = hopGradient(source) // BASELINE
@@ -54,16 +47,16 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
       hopGradient(mid() == leftSrc) // optimal gradient when RIGHT_SRC stops being a source
     val refHopCount = if (passedTime >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
     // Learning definition
-    val problem = learningProblem(refHopCount.toInt)
+    val learningProblem = learningProcess(q)
+      .stateDefinition(stateFromWindow)
+      .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
+      .actionEffectDefinition((output, action) => output + action + 1)
+      .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Program execution
-    val epsilon =
-      TimeVariable.exponentialDecayFunction(zeroBasedEpsilon, factor).value(Clock(episode))
-    val (roundData, trajectory) = {
-      problem.actWith(
-        monteCarloLearning.ops,
-        clock,
-        Policy.softFixedEpsilonGreedy(actions, zeroBasedEpsilon)
-      )
+    val (roundData, trajectory) = mux(learnCondition && !source) {
+      learningProblem.learn(learningAlgorithm, epsilon, clock)
+    } {
+      learningProblem.actGreedy(learningAlgorithm, clock)
     }
     val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output

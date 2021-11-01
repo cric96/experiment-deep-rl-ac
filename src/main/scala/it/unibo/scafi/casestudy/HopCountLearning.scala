@@ -99,7 +99,7 @@ trait HopCountLearning {
         val reward = ctx.rewardSignal(nextOutput)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val nextAction =
-          policy(ctx.initialCondition.state, ctx.q, clock)
+          policy(stateTPlus, learningInstance.extractQFromTarget(ev.target), clock)
         ev
           .focus(_.clock)
           .modify(_.tick)
