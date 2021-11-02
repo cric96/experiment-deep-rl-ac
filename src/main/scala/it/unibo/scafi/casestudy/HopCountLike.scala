@@ -73,14 +73,11 @@ trait HopCountLike
     val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
-    //val diff = (minOutput - oldState).sign
     val diff = (minOutput - oldState) match {
       case diff if Math.abs(diff) > maxDiff => maxDiff * diff.sign
       case diff                             => diff
     }
-    //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
     recentValues(trajectorySize, diff).toList.map(_.toInt)
-    //List(minOutput).map(_.toInt)
   }
 
   protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =
