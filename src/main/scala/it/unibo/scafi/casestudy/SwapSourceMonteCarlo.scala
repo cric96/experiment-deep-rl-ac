@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 class SwapSourceMonteCarlo extends SwapSourceLike {
   override lazy val qId: String = "global"
-  val factor = 10
+  val factor = 100
   lazy val monteCarloLearning: MonteCarlo.Type[State, Action] =
     MonteCarlo.FirstVisit[State, Action](actions, gamma)
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -28,10 +28,11 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
           Map.empty[(State, Action), (Double, Int)].withDefaultValue((0.0, 0))
         val estimations = qTableStorage.loadOrElse("estimation", defaultEstimation)
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
+        println(s"Population size: ${nodes.size.toString}")
         val managers = nodes.map(new SimpleNodeManager(_))
         val trajectories =
           randomGen.shuffle(managers.map(node => (node.get[Seq[(State, Action, Double)]]("trajectory"))))
-        val (qUpdate, estimationUpdate) = trajectories.foldLeft((q, estimations)) {
+        val (qUpdate, estimationUpdate) = trajectories.headOption.foldLeft((q, estimations)) {
           case ((q, estimation), trajectory) =>
             val (qUpdated, trace) = monteCarloLearning.improve(trajectory, (q, estimation), Clock.start)
             (qUpdated, trace)
@@ -62,7 +63,7 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
       problem.actWith(
         monteCarloLearning.ops,
         clock,
-        Policy.softFixedEpsilonGreedy(actions, zeroBasedEpsilon)
+        Policy.softFixedEpsilonGreedy(actions, epsilon)
       )
     }
     val stateOfTheArt = svdGradient()(source = source, () => 1)

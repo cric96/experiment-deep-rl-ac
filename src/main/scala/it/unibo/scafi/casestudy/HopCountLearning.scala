@@ -58,6 +58,8 @@ trait HopCountLearning {
         )
         val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target), clock)
         ev
+          .focus(_.trajectory)
+          .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
           .focus(_.target)
           .replace(updateTargetLearning)
           .focus(_.clock)
@@ -68,8 +70,6 @@ trait HopCountLearning {
           .replace(nextAction)
           .focus(_.state)
           .replace(stateTPlus)
-          .focus(_.trajectory)
-          .modify(trajectory => (ev.state, action, reward) :: trajectory.toList)
       }.view(learning.ops)
     }
 
@@ -101,6 +101,8 @@ trait HopCountLearning {
         val nextAction =
           policy(stateTPlus, learningInstance.extractQFromTarget(ev.target), clock)
         ev
+          .focus(_.trajectory)
+          .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
           .focus(_.clock)
           .modify(_.tick)
           .focus(_.output)
@@ -109,8 +111,6 @@ trait HopCountLearning {
           .replace(nextAction)
           .focus(_.state)
           .replace(stateTPlus)
-          .focus(_.trajectory)
-          .modify(trajectory => (ev.state, action, reward) :: trajectory.toList)
       }.view(learningInstance)
     }
 

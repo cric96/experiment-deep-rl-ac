@@ -21,6 +21,7 @@ class SwapSourceOnlineMax extends SwapSourceLike {
       leaderLogic = () => {
         println(s"episode: ${episode.toString}, epsilon at start: ${epsilon.value(clock).toString}")
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
+        println(s"Population size: ${nodes.size.toString}")
         val managers =
           nodes.filter(node => node.getId != rightSrc && node.getId != leftSrc).map(new SimpleNodeManager(_))
         val qtables = managers.map(_.get[QMap[List[Int], Int]]("qtable"))
@@ -33,7 +34,7 @@ class SwapSourceOnlineMax extends SwapSourceLike {
           states.map(s =>
             s -> actions.map(a => a -> maxQTable.withDefault(initialValue)(s, a)).toNonEmptyList.maxBy(_._2)
           )
-        println(actionsGreedy.map { case (s, (a, r)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
+        println(actionsGreedy.map { case (s, (a, _)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
       },
       id = mid()
     )
@@ -74,7 +75,7 @@ class SwapSourceOnlineMax extends SwapSourceLike {
     node.put("classicHopCount", classicHopCount)
     node.put("rlbasedHopCount", roundData.output)
     node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
-    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - roundData.output))
+    node.put(s"err_rlbasedHopCount", Math.abs(rlBasedError))
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)
