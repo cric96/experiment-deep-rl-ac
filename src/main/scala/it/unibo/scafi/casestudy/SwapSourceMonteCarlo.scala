@@ -4,7 +4,7 @@ import cats.Show
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.Q.QMap
-import it.unibo.learning.{Clock, MonteCarlo, Policy, TimeVariable}
+import it.unibo.learning.{Clock, Policy, TimeVariable}
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala

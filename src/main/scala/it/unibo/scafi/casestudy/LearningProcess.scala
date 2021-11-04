@@ -1,6 +1,5 @@
 package it.unibo.scafi.casestudy
 
-import it.unibo.learning.Policy.QBased
 import it.unibo.learning.ReinforcementLearning.Ops
 import it.unibo.learning._
 
