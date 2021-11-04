@@ -1,29 +1,41 @@
 package it.unibo.scafi.casestudy
 
+import cats.Show
+import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Clock, Q}
+import it.unibo.learning.Clock
+import it.unibo.learning.Q.QMap
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
-
+import it.unibo.cats.TypeEnrichment._
 import scala.jdk.CollectionConverters.IteratorHasAsScala
-import scala.util.Random
 
-class SwapSourceOnline extends SwapSourceLike with SarsaBased {
+class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  override lazy val qId: String = {
-    val random = new Random(episode)
-    val nodes = alchemistEnvironment.getNodes.iterator().asScala
-    val randomId = random.shuffle(nodes.map(_.getId).toVector)
-    if (learnCondition) { randomId.apply(mid()).toString }
-    else { mid().toString }
-  }
+  override lazy val qId: String = "global"
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val endHandler: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](
       sharedLogic = () => {
-        qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable"))
         clockTableStorage.save(mid().toString, node.get[Clock]("clock"))
       },
-      leaderLogic = () => println(s"Episodes: ${episode.toString}"),
+      leaderLogic = () => {
+        println(s"episode: ${episode.toString}, epsilon at start: ${epsilon.value(clock).toString}")
+        val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
+        println(s"Population size: ${nodes.size.toString}")
+        val managers =
+          nodes.filter(node => node.getId != rightSrc && node.getId != leftSrc).map(new SimpleNodeManager(_))
+        val qtables = managers.map(_.get[QMap[List[Int], Int]]("qtable"))
+        val maxQTable = QMap.mergeMax(qtables: _*)
+        implicit def listShow[A]: Show[List[A]] = (t: List[A]) => t.mkString(",") // for pretty printing
+        qTableStorage.saveRaw("global.csv", QMap.asCsv(maxQTable).getOrElse(""))
+        qTableStorage.save(qId, QMap.mergeMax(qtables: _*))
+        val states = maxQTable.map.keySet.map(_._1)
+        val actionsGreedy =
+          states.map(s =>
+            s -> actions.map(a => a -> maxQTable.withDefault(initialValue)(s, a)).toNonEmptyList.maxBy(_._2)
+          )
+        println(actionsGreedy.map { case (s, (a, _)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
+      },
       id = mid()
     )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
@@ -63,7 +75,7 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
     node.put("classicHopCount", classicHopCount)
     node.put("rlbasedHopCount", roundData.output)
     node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
-    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - roundData.output))
+    node.put(s"err_rlbasedHopCount", Math.abs(rlBasedError))
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)

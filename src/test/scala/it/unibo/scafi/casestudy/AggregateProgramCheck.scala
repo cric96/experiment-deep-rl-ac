@@ -24,7 +24,7 @@ class AggregateProgramCheck
     val (result, _) = if (learn) {
       learningProblem.learn(qLearning, TimeVariable.independent(0.1), Clock.start)
     } else {
-      learningProblem.act(qLearning, Clock.start)
+      learningProblem.actGreedy(qLearning, Clock.start)
     }
     node.put("q", result.q)
     node.put("clock", result.clock)

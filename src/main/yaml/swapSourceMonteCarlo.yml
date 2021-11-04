@@ -2,7 +2,7 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 40.0 }
+  last_greedy_episodes: { formula: 0.0 }
   learning_episodes: { formula: 500.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
@@ -19,7 +19,7 @@ variables:
   initial_value: &initial_value { formula: 0.0 }
   gamma: &gamma { formula: 0.9 }
   window_size: &window_size { formula: 3 }
-  trajectory_size: &trajectory_size { formula: 2 }
+  trajectory_size: &trajectory_size { formula: 1 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
   right_source: &right_source { formula: 'learn ? 59 : 40'}
@@ -37,7 +37,7 @@ _beta: &beta >
 #_epsilon: &epsilon >
 #  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.5, 1000)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.independent(0.01)
+  it.unibo.learning.TimeVariable.independent(0.9)
 
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)
@@ -56,7 +56,7 @@ deployments:
     programs:
       - time-distribution: 1
         type: Event
-        actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSourceOnline, 5.0] }
+        actions: { type: RunScafiProgram, parameters: [it.unibo.scafi.casestudy.SwapSourceMonteCarlo, 5.0] }
       - program: send
 
     contents:

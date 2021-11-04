@@ -1,5 +1,7 @@
 package it.unibo.scafi.casestudy
 
+import it.unibo.learning.Policy.QBased
+import it.unibo.learning.ReinforcementLearning.Ops
 import it.unibo.learning._
 
 import scala.util.Random
@@ -51,8 +53,14 @@ object LearningProcess {
     def learn[T](learning: Sars.Type[S, A, T], epsilon: TimeVariable[Double], clock: Clock)(implicit
         rnd: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
-    def act[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+
+    def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
         rand: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
+
+    def actWith[T](learningOps: Ops[S, A, T], clock: Clock, policy: Policy.QBased[S, A])(implicit
+        rand: Random
+    ): (RoundData[S, A, O], Trajectory[S, A])
+
   }
 }

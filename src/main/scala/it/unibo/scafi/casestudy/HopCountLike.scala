@@ -50,9 +50,10 @@ trait HopCountLike
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
     qTableStorage.loadOrElse(qId, Q.zeros[State, Action]()).withDefault(initialValue)
-  lazy val learningAlgorithm = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Aggregate Program data
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
+  // Constants
+  val maxDiff = 100
   // Store data
   def endHandler: EndHandler[_]
 
@@ -61,15 +62,21 @@ trait HopCountLike
   final override def main(): Any =
     (aggregateProgram(), endHandler)
 
+  protected def learningProblem(reference: Int) = learningProcess(q)
+    .stateDefinition(stateFromWindow)
+    .rewardDefinition(output => rewardSignal(reference, output))
+    .actionEffectDefinition((output, action) => output + action + 1)
+    .initialConditionDefinition(List.empty, Double.PositiveInfinity)
+
   protected def stateFromWindow(output: Double): State = {
     val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
-    //val diff = (minOutput - oldState).sign
-    val diff = minOutput - oldState
-    //recentValues(trajectorySize, (diff, minOutput)).flatMap { case (a, b) => List(a, b) }.toList
+    val diff = (minOutput - oldState) match {
+      case diff if Math.abs(diff) > maxDiff => maxDiff * diff.sign
+      case diff                             => diff
+    }
     recentValues(trajectorySize, diff).toList.map(_.toInt)
-    //List(minOutput).map(_.toInt)
   }
 
   protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =

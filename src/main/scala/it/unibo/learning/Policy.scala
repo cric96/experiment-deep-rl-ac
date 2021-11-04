@@ -16,12 +16,14 @@ object Policy {
     }
     randomFromList(Reducible[NonEmptySet].toNonEmptyList(actions))
   }
+
   def greedy[S, A](actions: NonEmptySet[A]): QBased[S, A] = (state, q, _) => {
     val (action, _) = actions.toNonEmptyList
       .map(action => (action, q(state, action)))
       .maxBy(_._2)
     action
   }
+
   def epsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: TimeVariable[Double])(implicit rnd: Random): QBased[S, A] =
     (state, q, clock) => {
       val epsilon = epsilonT.value(clock)
@@ -30,4 +32,25 @@ object Policy {
       else { greedy[S, A](actions) }
       policy(state, q, clock)
     }
+
+  def softEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: TimeVariable[Double])(implicit
+      rnd: Random
+  ): QBased[S, A] = {
+    val actionSize = actions.length
+    (state, q, clock) =>
+      val epsilon = epsilonT.value(clock)
+      val greedy = Policy.greedy(actions)(state, q, clock)
+      val other = actions.filter(_ != greedy).toList
+      val bestProb = (1 - epsilon) + epsilon / actionSize
+      val otherProb = epsilon / actionSize
+      val actionsWithProb =
+        other.map(action => (action, otherProb)).scan((greedy, bestProb)) { case ((_, accProb), (action, prob)) =>
+          (action, prob + accProb)
+        }
+      Stochastic.sampleFrom(NonEmptyList.fromListUnsafe(actionsWithProb))
+  }
+
+  def softFixedEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit
+      rnd: Random
+  ): QBased[S, A] = softEpsilonGreedy(actions, TimeVariable.independent(epsilonT))
 }
