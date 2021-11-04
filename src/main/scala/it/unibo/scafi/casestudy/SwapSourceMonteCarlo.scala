@@ -9,11 +9,9 @@ import it.unibo.scafi.casestudy.LearningProcess.RoundData
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceMonteCarlo extends SwapSourceLike {
+class SwapSourceMonteCarlo extends SwapSourceLike with MonteCarloBased {
   override lazy val qId: String = "global"
   val factor = 100
-  lazy val monteCarloLearning: MonteCarlo.Type[State, Action] =
-    MonteCarlo.FirstVisit[State, Action](actions, gamma)
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val endHandler: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](
@@ -34,7 +32,7 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
           randomGen.shuffle(managers.map(node => (node.get[Seq[(State, Action, Double)]]("trajectory"))))
         val (qUpdate, estimationUpdate) = trajectories.headOption.foldLeft((q, estimations)) {
           case ((q, estimation), trajectory) =>
-            val (qUpdated, trace) = monteCarloLearning.improve(trajectory, (q, estimation), Clock.start)
+            val (qUpdated, trace) = learningAlgorithm.improve(trajectory, (q, estimation), Clock.start)
             (qUpdated, trace)
         }
         implicit def listShow[A]: Show[List[A]] = (t: List[A]) => t.mkString(",") // for pretty printing
@@ -61,7 +59,7 @@ class SwapSourceMonteCarlo extends SwapSourceLike {
       TimeVariable.exponentialDecayFunction(zeroBasedEpsilon, factor).value(Clock(episode))
     val (roundData, trajectory) = {
       problem.actWith(
-        monteCarloLearning.ops,
+        learningAlgorithm.ops,
         clock,
         Policy.softFixedEpsilonGreedy(actions, epsilon)
       )

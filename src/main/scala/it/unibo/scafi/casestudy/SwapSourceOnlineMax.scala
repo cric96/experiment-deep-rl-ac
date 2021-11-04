@@ -9,7 +9,7 @@ import it.unibo.scafi.casestudy.LearningProcess.RoundData
 import it.unibo.cats.TypeEnrichment._
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceOnlineMax extends SwapSourceLike {
+class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val qId: String = "global"
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding

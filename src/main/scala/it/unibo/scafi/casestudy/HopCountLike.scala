@@ -50,7 +50,6 @@ trait HopCountLike
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
     qTableStorage.loadOrElse(qId, Q.zeros[State, Action]()).withDefault(initialValue)
-  lazy val learningAlgorithm = QLearning.Hysteretic[List[Int], Int](actions, alpha, beta, gamma)
   // Aggregate Program data
   lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
   // Constants

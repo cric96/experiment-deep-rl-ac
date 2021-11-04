@@ -7,7 +7,7 @@ import it.unibo.scafi.casestudy.LearningProcess.RoundData
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Random
 
-class SwapSourceOnline extends SwapSourceLike {
+class SwapSourceOnline extends SwapSourceLike with SarsaBased {
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val qId: String = {
     val random = new Random(episode)
