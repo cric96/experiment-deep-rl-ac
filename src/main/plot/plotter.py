@@ -156,7 +156,7 @@ def plot(config,content):
     t = plt.title(title_prefix[nf]+title)
     plt.subplots_adjust(top=.84) 
     suffix = (suffixes[nf] if nf in suffixes else "".join(map(str,pformat))) + "_" + parts_suffix
-    savefn = outdir+basefn+"_"+ suffix +".png"
+    savefn = outdir+basefn+"_"+ suffix +".pdf"
     print(("SAVE: " + savefn))
     plt.tight_layout()
     plt.savefig(savefn, bbox_inches='tight', pad_inches = 0)  
@@ -270,6 +270,7 @@ contents = process_files(files)
 #   file3_4 [d1=*, d2=B'] => export1=[...], ..., exportK=[...]
 configs = list(contents.keys()) # List of configs, where each config is an N-dim tuple of (k,v) tuples
 if sampling:
+  print(sampling_dim)
   # Let's group configurations (individual datasets) into groups where only a sampling dimension varies
   # sconfigs is a dict where keys are (dims-'random') and values are lists of configs
   sconfigs = group_by_varying_values_of(sampling_dim, configs)

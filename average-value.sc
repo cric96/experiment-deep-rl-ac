@@ -3,10 +3,13 @@
 import $ivy.`com.lihaoyi::os-lib:0.7.8`
 import $ivy.`com.github.tototoshi::scala-csv:1.3.8`
 import $ivy.`org.plotly-scala::plotly-render:0.8.1`
-
+import $ivy.`me.shadaj::scalapy-core:0.5.0`
 // Proc
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
+// Python deps
+import me.shadaj.scalapy.py
+import me.shadaj.scalapy.py.SeqConverters
 
 import plotly._
 import plotly.element._
@@ -14,6 +17,7 @@ import plotly.layout._
 import com.github.tototoshi.csv._
 import java.io.File
 import scala.collection.Factory
+
 implicit object MyFormat extends DefaultCSVFormat {
   override val delimiter = ' '
 }
@@ -40,7 +44,6 @@ def averageByIndicies(skip: Int, index: Int*): Any = {
       experiment => experiment.map(row => select(row, index:_*)).map(row => row.map(_.toDouble))
     ).map(
       experiment => 
-        
         experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
     )
     
@@ -49,11 +52,23 @@ def averageByIndicies(skip: Int, index: Int*): Any = {
   val plots = selectedIndicies
     .map(element => element.map(List(_)))
     .reduce((acc, data) => acc.zip(data).map { case (acc, data) => acc ::: data})
-    .map(Scatter(plotIndicies, _))
+    .map(_.toPythonCopy)
+    //.map(Scatter(plotIndicies, _))
     .toSeq
   
   val plotDiff = selectedIndicies.map(row => row.head - row.tail.head)
   val scatter = Scatter(plotIndicies, plotDiff)
-  Plotly.plot("id", plots :+ scatter, Layout(title = "Line and Scatter Plot"))
+  //Plotly.plot("id", plots :+ scatter, Layout(title = "Line and Scatter Plot"))
+
+  val matplotlib = py.module("matplotlib")
+  val plt = py.module("matplotlib.pyplot")
+  val np = py.module("numpy")
   
+  val steps = plotIndicies.toPythonCopy
+  plots.foreach(plot => plt.plot(plot))
+
+  plt.ylabel("average error")
+  plt.xlabel("episodes")
+  plt.show()
+  plt.savefig("mean-error.pdf")
 }

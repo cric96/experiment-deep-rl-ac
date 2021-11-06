@@ -21,7 +21,7 @@ class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
       leaderLogic = () => {
         println(s"episode: ${episode.toString}, epsilon at start: ${epsilon.value(clock).toString}")
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList
-        println(s"Population size: ${nodes.size.toString}")
+        //println(s"Population size: ${nodes.size.toString}")
         val managers =
           nodes.filter(node => node.getId != rightSrc && node.getId != leftSrc).map(new SimpleNodeManager(_))
         val qtables = managers.map(_.get[QMap[List[Int], Int]]("qtable"))
@@ -34,7 +34,7 @@ class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
           states.map(s =>
             s -> actions.map(a => a -> maxQTable.withDefault(initialValue)(s, a)).toNonEmptyList.maxBy(_._2)
           )
-        println(actionsGreedy.map { case (s, (a, _)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
+        //println(actionsGreedy.map { case (s, (a, _)) => (s, a) }.toList.sortBy(_._2).reverse.mkString(";"))
       },
       id = mid()
     )
@@ -59,7 +59,6 @@ class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
     } {
       learningProblem.actGreedy(learningAlgorithm, clock)
     }
-    val stateOfTheArt = svdGradient()(source = source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =
       if (rlBasedError > 0) { 1 }
@@ -79,8 +78,19 @@ class SwapSourceOnlineMax extends SwapSourceLike with SarsaBased {
     node.put(s"passed_time", passedTime)
     node.put("src", source)
     node.put("action", roundData.action)
-    node.put(s"err_flexHopCount", Math.abs(refHopCount - stateOfTheArt))
     node.put("trajectory", trajectory)
+    if (!learnCondition) {
+      // Check state of the art algorithm
+      val svd = svdGradient()(source = source, () => 1)
+      val bis = bisGradient(commRadius = sense[java.lang.Double]("range"))(source, () => 1)
+      val crf = crfGradient(10)(source, () => 1)
+      val flex = flexGradient(delta = 0.5, communicationRadius = sense[java.lang.Double]("range"))(source, () => 1)
+
+      node.put(s"err_svdHopCount", Math.abs(refHopCount - svd))
+      node.put(s"err_bisHopCount", Math.abs(refHopCount - bis))
+      node.put(s"err_crfHopCount", Math.abs(refHopCount - crf))
+      node.put(s"err_flexHopCount", Math.abs(refHopCount - flex))
+    }
     roundData
   }
 }
