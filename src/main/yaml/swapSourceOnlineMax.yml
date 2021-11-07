@@ -2,7 +2,7 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 10.0 }
+  last_greedy_episodes: { formula: 0.0 }
   learning_episodes: { formula: 500.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
@@ -27,15 +27,11 @@ variables:
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 20 }
 
-## Time variable
+## Time variables
 _alpha: &alpha >
   it.unibo.learning.TimeVariable.independent(0.5)
-## Time variable
 _beta: &beta >
   it.unibo.learning.TimeVariable.independent(0.01)
-
-#_epsilon: &epsilon >
-#  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.5, 1000)
 _epsilon: &epsilon >
   it.unibo.learning.TimeVariable.exponentialDecayFunction(1, 6000)
 
@@ -48,11 +44,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
-    # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
-    #type: GeometricGradientRectangle
-    #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
-    #           # nodes, x, y, sizex, sizey, lambda, step, horizontal, decreasing
+    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0]
     programs:
       - time-distribution: 1
         type: Event

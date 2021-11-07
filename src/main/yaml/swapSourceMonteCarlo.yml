@@ -27,15 +27,11 @@ variables:
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 20 }
 
-## Time variable
+## Time variables
 _alpha: &alpha >
   it.unibo.learning.TimeVariable.independent(0.5)
-## Time variable
 _beta: &beta >
   it.unibo.learning.TimeVariable.independent(0.05)
-
-#_epsilon: &epsilon >
-#  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.5, 1000)
 _epsilon: &epsilon >
   it.unibo.learning.TimeVariable.independent(0.9)
 
