@@ -2,7 +2,8 @@ name: Create a release with plots and data
 
 on:
   push:
-    tags: [*]
+    tags:
+      - '*'
 
 jobs:
   build:
