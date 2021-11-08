@@ -33,7 +33,7 @@ _alpha: &alpha >
 _beta: &beta >
   it.unibo.learning.TimeVariable.independent(0.01)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(1, 6000)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(1, 4000)
 
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)

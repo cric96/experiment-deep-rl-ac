@@ -1,4 +1,3 @@
-# Goal is to show reactivity to spikes of load, withstanding leader failures, and the benefit of an updated metric
 the_plots_labels:
   - Time                 #0
   - 'mean ref HopCount'

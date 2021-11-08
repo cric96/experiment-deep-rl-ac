@@ -7,32 +7,31 @@ import $ivy.`me.shadaj::scalapy-core:0.5.0`
 // Proc
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
+// CSV
+import com.github.tototoshi.csv._
 // Python deps
 import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.SeqConverters
-
-import plotly._
-import plotly.element._
-import plotly.layout._
-import com.github.tototoshi.csv._
 import java.io.File
 import scala.collection.Factory
 
-implicit object MyFormat extends DefaultCSVFormat {
-  override val delimiter = ' '
-}
+implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
 @main
-def averageByIndicies(skip: Int, index: Int*): Any = {
-  def select[A, F[a] <: Seq[a]](seq: F[A], indicies: Int*)(implicit factory: Factory[A, F[A]]): F[A] = {
-    seq.zipWithIndex.filter { case (data, i) => indicies.contains(i) }.map(_._1).to(factory)
-  }
+def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
+  val workingDir = os.pwd / "data"
+  val imageOutputDir = (workingDir / "imgs")
+  val imageOutputDirPy = imageOutputDir.wrapped.toAbsolutePath.toString
+
+  if(!os.exists(imageOutputDir)){ os.makeDir(imageOutputDir) }
+
   val orderedExperiments =  os.list(os.pwd / "data")
     .filter(os.isFile)
-    .sortBy(_.wrapped.toString().split("-").last.toDouble)
+    .filter(_.toString().contains(experimentName))
+    .sortBy(_.wrapped.toString.split("-").last.toDouble)
   
   val experiments = orderedExperiments
-    .map(file => file.wrapped.toAbsolutePath().toString())
+    .map(file => file.wrapped.toAbsolutePath.toString)
     .map(new File(_))
     .map(CSVReader.open)
     .map(_.all())
@@ -41,7 +40,7 @@ def averageByIndicies(skip: Int, index: Int*): Any = {
   
   val selectedIndicies = experiments
     .map(
-      experiment => experiment.map(row => select(row, index:_*)).map(row => row.map(_.toDouble))
+      experiment => experiment.map(row => select(row, indices:_*)).map(row => row.map(_.toDouble))
     ).map(
       experiment => 
         experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
@@ -53,22 +52,21 @@ def averageByIndicies(skip: Int, index: Int*): Any = {
     .map(element => element.map(List(_)))
     .reduce((acc, data) => acc.zip(data).map { case (acc, data) => acc ::: data})
     .map(_.toPythonCopy)
-    //.map(Scatter(plotIndicies, _))
     .toSeq
   
-  val plotDiff = selectedIndicies.map(row => row.head - row.tail.head)
-  val scatter = Scatter(plotIndicies, plotDiff)
-  //Plotly.plot("id", plots :+ scatter, Layout(title = "Line and Scatter Plot"))
-
-  val matplotlib = py.module("matplotlib")
+  // Python part
   val plt = py.module("matplotlib.pyplot")
-  val np = py.module("numpy")
-  
+  py.module("matplotlib").rc("figure", figsize = (7, 2))
   val steps = plotIndicies.toPythonCopy
   plots.foreach(plot => plt.plot(plot))
-
+  //plt.show()
   plt.ylabel("average error")
   plt.xlabel("episodes")
-  plt.show()
-  plt.savefig("mean-error.pdf")
+  plt.title("training errors")
+  plt.savefig(s"$imageOutputDirPy/mean-error.pdf")
+  "Ok"
+}
+// Utility function
+def select[A, F[a] <: Seq[a]](seq: F[A], indicies: Int*)(implicit factory: Factory[A, F[A]]): F[A] = {
+  seq.zipWithIndex.filter { case (_, i) => indicies.contains(i) }.map(_._1).to(factory)
 }

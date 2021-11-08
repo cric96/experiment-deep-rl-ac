@@ -41,5 +41,5 @@ force_limit_plot_x:
 #  3: 800
 sampling: true
 samplingField: episode
-title_prefix: ''
+title_prefix: 'Average error: 760 nodes'
 #excluded_titles: [0]
