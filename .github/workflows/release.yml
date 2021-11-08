@@ -1,0 +1,29 @@
+name: Create a release with plots and data
+
+on:
+  push:
+    tags: [*]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup ammonite and java
+      uses: coursier/setup-action@v1
+      with:
+        jvm: adopt:11
+        apps: ammonite
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+        architecture: x64
+    - name: Install dependency
+      run: pip install -r requirements.txt
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Run simulations and produce plots
+      run: ./simulation.sh
