@@ -35,7 +35,8 @@ class SwapSourceTest extends AnyFlatSpec with should.Matchers with BeforeAndAfte
       assert(node.get[Q[List[Int], Int]]("qtable") != Q.fillWith[List[Int], Int](node.get[Double]("initial_value")))
     }
     engine.getEnvironment.forEach { node =>
-      assert(os.exists(pwd / "qtables" / node.getId.toString))
+      println(node.getId)
+      assert(os.exists(pwd / "qtables_test" / node.getId.toString))
     }
     succeed
   }
