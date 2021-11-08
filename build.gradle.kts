@@ -108,7 +108,6 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             }
             this.additionalConfiguration()
         }
-        println("Thread count = $threadCount")
         val capitalizedName = it.nameWithoutExtension.capitalize()
         val graphic by basetask("run${capitalizedName}Graphic")
         runAllGraphic.dependsOn(graphic)
