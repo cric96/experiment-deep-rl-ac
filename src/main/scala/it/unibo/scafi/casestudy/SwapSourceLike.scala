@@ -9,5 +9,5 @@ trait SwapSourceLike extends HopCountLike {
     node.get[Integer]("stop_right_source") // time at which the source at the right of the env stops being a source
 
   override def source: Boolean =
-    if (mid() == leftSrc || (mid() == rightSrc && passedTime < rightSrcStop)) true else false
+    if (mid() == leftSrc || (mid() == rightSrc && passedTime() < rightSrcStop)) true else false
 }

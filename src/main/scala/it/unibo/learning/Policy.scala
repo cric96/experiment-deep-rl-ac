@@ -6,10 +6,10 @@ import it.unibo.cats.TypeEnrichment._
 import scala.util.Random
 
 object Policy {
-  type Type[S, C, A] = (S, C, Clock) => A
+  type Type[S, C, A] = (S, C) => A
   type QBased[S, A] = Type[S, Q[S, A], A]
 
-  def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _, _) => {
+  def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _) => {
     def randomFromList(actions: NonEmptyList[A]): A = actions match {
       case NonEmptyList(head, Nil)              => head
       case NonEmptyList(head, nextHead :: tail) => Stochastic.flip(head, randomFromList(NonEmptyList(nextHead, tail)))
@@ -17,29 +17,29 @@ object Policy {
     randomFromList(Reducible[NonEmptySet].toNonEmptyList(actions))
   }
 
-  def greedy[S, A](actions: NonEmptySet[A]): QBased[S, A] = (state, q, _) => {
+  def greedy[S, A](actions: NonEmptySet[A]): QBased[S, A] = (state, q) => {
     val (action, _) = actions.toNonEmptyList
       .map(action => (action, q(state, action)))
       .maxBy(_._2)
     action
   }
 
-  def epsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: TimeVariable[Double])(implicit rnd: Random): QBased[S, A] =
-    (state, q, clock) => {
-      val epsilon = epsilonT.value(clock)
+  def epsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit rnd: Random): QBased[S, A] =
+    (state, q) => {
+      val epsilon = epsilonT
       require(epsilon >= 0 && epsilon <= 1)
       val policy = if (rnd.nextDouble() <= epsilon) { random[S, A](actions) }
       else { greedy[S, A](actions) }
-      policy(state, q, clock)
+      policy(state, q)
     }
 
-  def softEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: TimeVariable[Double])(implicit
+  def softEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit
       rnd: Random
   ): QBased[S, A] = {
     val actionSize = actions.length
-    (state, q, clock) =>
-      val epsilon = epsilonT.value(clock)
-      val greedy = Policy.greedy(actions)(state, q, clock)
+    (state, q) =>
+      val epsilon = epsilonT
+      val greedy = Policy.greedy(actions)(state, q)
       val other = actions.filter(_ != greedy).toList
       val bestProb = (1 - epsilon) + epsilon / actionSize
       val otherProb = epsilon / actionSize
@@ -52,5 +52,5 @@ object Policy {
 
   def softFixedEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit
       rnd: Random
-  ): QBased[S, A] = softEpsilonGreedy(actions, TimeVariable.independent(epsilonT))
+  ): QBased[S, A] = softEpsilonGreedy(actions, epsilonT)
 }

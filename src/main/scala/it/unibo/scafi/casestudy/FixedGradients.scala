@@ -70,20 +70,8 @@ trait FixedGradients extends GenericUtils with StateManagement {
         (0.0, 0.0)
       } {
         minHoodPlus {
-          val newEstimate = Math.max(
-            nbr {
-              spatialDist
-            } + metric(),
-            speed * nbr {
-              tempDist
-            } - commRadius
-          )
-          (
-            newEstimate,
-            nbr {
-              tempDist
-            } + lagMetric / 1000.0
-          )
+          val newEstimate = Math.max(nbr(spatialDist) + metric(), speed * nbr(tempDist) - commRadius)
+          (newEstimate, nbr(tempDist) + lagMetric / 1000.0)
         }
       }
     }._1
@@ -111,14 +99,16 @@ trait FixedGradients extends GenericUtils with StateManagement {
       }
     }._1
 
-  /** Idea: a device should change its estimate only for significant errors.
-    * Useful when devices far from the source need only coarse estimates.
-    * Flex gradient provides tunable trade-off between precision and communication cost.
+  /** Idea: a device should change its estimate only for significant errors. Useful when devices far from the source
+    * need only coarse estimates. Flex gradient provides tunable trade-off between precision and communication cost.
     *
-    * @param source Source fields of devices from which the gradient is calculated
-    * @param epsilon Parameter expressing tolerance wrt changes
-    * @param delta Distortion into the distance measure, such that neighbor distance is
-    *              never considered to be less than delta * communicationRadius.
+    * @param source
+    *   Source fields of devices from which the gradient is calculated
+    * @param epsilon
+    *   Parameter expressing tolerance wrt changes
+    * @param delta
+    *   Distortion into the distance measure, such that neighbor distance is never considered to be less than delta *
+    *   communicationRadius.
     * @param communicationRadius
     * @return
     */

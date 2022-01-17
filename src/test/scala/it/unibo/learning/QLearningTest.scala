@@ -29,18 +29,17 @@ class QLearningTest extends AnyFlatSpec with should.Matchers {
   private val action = ActionA
   private val nextState = StateB
   private val gamma = 1
-  private val variableTime = TimeVariable.independent(0.5)
+  private val variableTime = 0.5
   private val reward = 1
   implicit private val random = new Random()
 
   def testQLearning(process: QLearning.Type[State, Action], processName: String): Unit = {
     s"$processName process" should "update the Q table accordingly" in {
-      val updatedQ = process.improve((currentState, action, reward, nextState), q, Clock.start)
+      val updatedQ = process.improve((currentState, action, reward, nextState), q)
       q(currentState, action) != updatedQ(currentState, action)
     }
   }
 
   testQLearning(QLearning.Plain(actions, variableTime, gamma), "Q Learning")
   testQLearning(QLearning.Hysteretic(actions, variableTime, variableTime, gamma), "Hysteretic Q Learning")
-  testQLearning(QLearning.Distributed(actions, variableTime, gamma), "Distributed Q Learning")
 }

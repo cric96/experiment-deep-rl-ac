@@ -19,11 +19,10 @@ trait HopCountLearning {
       state: S,
       action: A,
       output: Double,
-      trajectory: Trajectory[S, A],
-      clock: Clock
+      trajectory: Trajectory[S, A]
   ) {
     def view(learning: ReinforcementLearning.Ops[S, A, T]): (RoundData[S, A, Double], Trajectory[S, A]) =
-      (RoundData(learning.extractQFromTarget(target), output, action, clock), trajectory)
+      (RoundData(learning.extractQFromTarget(target), output, action), trajectory)
   }
 
   def learningProcess[S, A](initialQ: Q[S, A]): LearningProcess.QBuilderStep[S, A, Double] =
@@ -32,10 +31,9 @@ trait HopCountLearning {
   implicit class HopCountFinalizer[S, A](ctx: LearningContext[S, A, Double]) extends BuilderFinalizer[S, A, Double] {
     override def learn[T](
         learning: Sars.Type[S, A, T],
-        epsilon: TimeVariable[Double],
-        clock: Clock
+        epsilon: Double
     )(implicit rnd: Random): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q, clock)
+      val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q)
       val epsilonGreedy = Policy.epsilonGreedy[S, A](learning.actions, epsilon)
       val stateEvolution =
         HopCountState[S, A, learning.ops.Aux](
@@ -43,8 +41,7 @@ trait HopCountLearning {
           ctx.initialCondition.state,
           action,
           ctx.initialCondition.output,
-          List.empty,
-          clock
+          List.empty
         )
       rep(stateEvolution) { ev =>
         val nextOutput = hopCount(ev.action, ctx)
@@ -53,17 +50,14 @@ trait HopCountLearning {
         // Agent update
         val updateTargetLearning = learning.improve(
           (ev.state, ev.action, reward, stateTPlus),
-          ev.target,
-          ev.clock
+          ev.target
         )
-        val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target), clock)
+        val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target))
         ev
           .focus(_.trajectory)
           .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
           .focus(_.target)
           .replace(updateTargetLearning)
-          .focus(_.clock)
-          .modify(_.tick)
           .focus(_.output)
           .replace(nextOutput)
           .focus(_.action)
@@ -73,38 +67,34 @@ trait HopCountLearning {
       }.view(learning.ops)
     }
 
-    override def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+    override def actGreedy[T](learning: Sars.Type[S, A, T])(implicit
         rand: Random
-    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning.ops, clock, Policy.greedy(learning.actions))
+    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning.ops, Policy.greedy(learning.actions))
 
     override def actWith[T](
         learningInstance: Ops[S, A, T],
-        clock: Clock,
         policy: Policy.QBased[S, A]
     )(implicit
         rand: Random
     ): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = policy(ctx.initialCondition.state, ctx.q, clock)
+      val action = policy(ctx.initialCondition.state, ctx.q)
       val stateEvolution =
         HopCountState[S, A, T](
           learningInstance.initTargetFromQ(ctx.q),
           ctx.initialCondition.state,
           action,
           ctx.initialCondition.output,
-          List.empty,
-          clock = clock
+          List.empty
         )
       rep(stateEvolution) { ev =>
         val nextOutput = hopCount(ev.action, ctx)
         val reward = ctx.rewardSignal(nextOutput)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val nextAction =
-          policy(stateTPlus, learningInstance.extractQFromTarget(ev.target), clock)
+          policy(stateTPlus, learningInstance.extractQFromTarget(ev.target))
         ev
           .focus(_.trajectory)
           .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
-          .focus(_.clock)
-          .modify(_.tick)
           .focus(_.output)
           .replace(nextOutput)
           .focus(_.action)

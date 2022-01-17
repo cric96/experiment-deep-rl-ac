@@ -3,7 +3,7 @@ package it.unibo.scafi.casestudy
 import it.unibo.AlchemistHelper._
 import it.unibo.alchemist.model.implementations.times.DoubleTime
 import it.unibo.alchemist.model.interfaces.{GeoPosition, Time}
-import it.unibo.learning.{Clock, Q}
+import it.unibo.learning.{Episode, Q}
 import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -22,7 +22,6 @@ class HopCountQLearningTest extends AnyFlatSpec with should.Matchers {
     engine.run()
     engine.forEach { node =>
       assert(node.get[Q[Int, Int]]("q") != Q.zeros[Int, Int]())
-      assert(node.get[Clock]("clock") != Clock.start)
       val output = node.get[Double]("output")
       assert(output == 10 || output == 0)
     }
@@ -35,7 +34,6 @@ class HopCountQLearningTest extends AnyFlatSpec with should.Matchers {
     engine.run()
     engine.forEach { node =>
       assert(node.get[Q[Int, Int]]("q") == Q.zeros[Int, Int]())
-      assert(node.get[Clock]("clock") != Clock.start)
     }
   }
 }

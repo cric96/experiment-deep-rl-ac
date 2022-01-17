@@ -7,7 +7,7 @@ import scala.util.Random
 
 object LearningProcess {
   case class InitialCondition[S, O](state: S, output: O)
-  case class RoundData[S, A, O](q: Q[S, A], output: O, action: A, clock: Clock)
+  case class RoundData[S, A, O](q: Q[S, A], output: O, action: A)
   type Trajectory[S, A] = Seq[(S, A, Double)]
   case class QBuilderStep[S, A, O](q: Q[S, A]) {
     def stateDefinition(state: O => S): RewardDefinitionStep[S, A, O] = RewardDefinitionStep(q, state)
@@ -49,17 +49,16 @@ object LearningProcess {
   )
 
   trait BuilderFinalizer[S, A, O] {
-    def learn[T](learning: Sars.Type[S, A, T], epsilon: TimeVariable[Double], clock: Clock)(implicit
+    def learn[T](learning: Sars.Type[S, A, T], epsilon: Double)(implicit
         rnd: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
 
-    def actGreedy[T](learning: Sars.Type[S, A, T], clock: Clock)(implicit
+    def actGreedy[T](learning: Sars.Type[S, A, T])(implicit
         rand: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
 
-    def actWith[T](learningOps: Ops[S, A, T], clock: Clock, policy: Policy.QBased[S, A])(implicit
+    def actWith[T](learningOps: Ops[S, A, T], policy: Policy.QBased[S, A])(implicit
         rand: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
-
   }
 }

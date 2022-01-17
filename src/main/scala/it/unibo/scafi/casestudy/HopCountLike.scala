@@ -4,7 +4,7 @@ import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Clock, Q, QLearning, TimeVariable}
+import it.unibo.learning.{Episode, Q, QLearning, TimeVariable}
 import it.unibo.scafi.casestudy.LearningProcess.RoundData
 import it.unibo.storage.LocalStorage
 
@@ -29,9 +29,7 @@ trait HopCountLike
   implicit lazy val rand: Random = randomGen
   // Storage
   lazy val qTableStorage = new LocalStorage[String](node.get[java.lang.String]("qtable_folder"))
-  lazy val episode: Int = node.get[java.lang.Double]("episode").toInt
-  lazy val clockTableStorage = new LocalStorage[String](node.get[java.lang.String]("clock_folder"))
-  def passedTime: Double = alchemistTimestamp.toDouble
+  lazy val episode: Episode = Episode(node.get[java.lang.Double]("episode").toInt)
   // Variable loaded by alchemist configuration.
   lazy val learnCondition: Boolean = node.get[java.lang.Boolean]("learn")
   lazy val initialValue: Double = node.get[Double]("initial_value")
@@ -50,8 +48,6 @@ trait HopCountLike
   // Pickle loose the default, so we need to replace it each time the map is loaded
   lazy val q: Q[State, Action] =
     qTableStorage.loadOrElse(qId, Q.zeros[State, Action]()).withDefault(initialValue)
-  // Aggregate Program data
-  lazy val clock: Clock = clockTableStorage.loadOrElse(mid().toString, Clock.start)
   // Constants
   val maxDiff = 100
   // Store data
@@ -82,4 +78,6 @@ trait HopCountLike
   protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =
     if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
     else { -1 }
+
+  protected def passedTime(): Double = alchemistTimestamp.toDouble
 }

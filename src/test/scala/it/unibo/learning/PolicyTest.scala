@@ -18,24 +18,24 @@ class PolicyTest extends AnyFlatSpec with should.Matchers {
   private val state = 0
   val greedy: QBased[Int, Int] = Policy.greedy[Int, Int](actions)
   val randomPolicy: QBased[Int, Int] = Policy.random[Int, Int](actions)
-  val epsilonGreedy: QBased[Int, Int] = Policy.epsilonGreedy[Int, Int](actions, TimeVariable.independent(1))
-  val greedyByEpsilon: QBased[Int, Int] = Policy.epsilonGreedy[Int, Int](actions, TimeVariable.independent(0))
+  val epsilonGreedy: QBased[Int, Int] = Policy.epsilonGreedy[Int, Int](actions, 1)
+  val greedyByEpsilon: QBased[Int, Int] = Policy.epsilonGreedy[Int, Int](actions, 0)
   "A greedy policy" should "be used from a Q table" in {
     val q = Q.zeros[Int, Int]()
     val best = 2
     val withValues = q.update(0, 1, 1).update(0, best, 2).update(0, 3, -1)
-    val bestAction = greedy(state, withValues, Clock.start)
+    val bestAction = greedy(state, withValues)
     bestAction shouldBe best
   }
 
   "A random policy" should "return actions randomly" in {
-    LazyList.fill(bigNumber)(randomPolicy(state, Q.zeros(), Clock.start)).toSet shouldBe actions
+    LazyList.fill(bigNumber)(randomPolicy(state, Q.zeros())).toSet shouldBe actions
   }
 
   "An epsilon greedy policy" should "return actions randomly when epsilon is one" in {
     val epsilonList = LazyList
       .fill(bigNumber) {
-        epsilonGreedy(state, Q.zeros(), Clock.start)
+        epsilonGreedy(state, Q.zeros())
       }
       .toSet
     epsilonList shouldBe actions
@@ -45,7 +45,7 @@ class PolicyTest extends AnyFlatSpec with should.Matchers {
     val q = Q.zeros[Int, Int]()
     val best = 1
     val withValues = q.update(0, best, 1)
-    val bestAction = greedyByEpsilon(state, withValues, Clock.start)
+    val bestAction = greedyByEpsilon(state, withValues)
     bestAction shouldBe best
   }
 
