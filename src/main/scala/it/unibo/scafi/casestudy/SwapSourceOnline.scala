@@ -7,6 +7,7 @@ import it.unibo.scafi.casestudy.LearningProcess.RoundData
 class SwapSourceOnline extends SwapSourceLike with SarsaBased {
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
   override lazy val qId: String = mid().toString
+  lazy val radius: Double = node.get("range")
   // Aggregate program
   override def aggregateProgram(): RoundData[State, Action, Double] = {
     val classicHopCount = hopGradient(source) // BASELINE
@@ -14,7 +15,7 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
       hopGradient(mid() == leftSrc) // optimal gradient when RIGHT_SRC stops being a source
     val refHopCount = if (passedTime() >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
     // Learning definition
-    val learningProblem = learningProcess(q)
+    val learningProblem = learningProcess(GlobalMap.q)
       .stateDefinition(stateFromWindow)
       .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
       .actionEffectDefinition((output, action) => output + action + 1)
@@ -25,7 +26,9 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
     } {
       learningProblem.actGreedy(learningAlgorithm)
     }
-    val stateOfTheArt = crfGradient(1)(source = source, () => 1)
+
+    val crf = crfGradient(1.03)(source = source, () => 1)
+    val bis = bisGradient(1)(source, () => 1)
     val rlBasedError = refHopCount - roundData.output
     val overEstimate =
       if (rlBasedError > 0) { 1 }
@@ -44,7 +47,8 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
     node.put(s"passed_time", passedTime())
     node.put("src", source)
     node.put("action", roundData.action)
-    node.put(s"refHopCount", Math.abs(refHopCount - stateOfTheArt))
+    node.put(s"err_crf", Math.abs(refHopCount - crf))
+    node.put(s"err_bis", Math.abs(refHopCount - bis))
     node.put("trajectory", trajectory)
     roundData
   }
@@ -53,7 +57,10 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
   override lazy val endHandler: EndHandler[_] = {
     val storeMonitor = new EndHandler[Any](
       sharedLogic = () => qTableStorage.save(qId, node.get[Q[List[Int], Int]]("qtable")),
-      leaderLogic = () => println(s"Episodes: ${episode.toString}"),
+      leaderLogic = () => {
+        println(s"Episodes: ${episode.toString}")
+        println(s"Epsilon: ${epsilon.value(episode).toString}")
+      },
       id = mid()
     )
     alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)

@@ -11,6 +11,17 @@ object Q {
   def zeros[S, A](): Q[S, A] = fillWith(0)
   def fillWith[S, A](value: => Double): Q[S, A] = QMap(Map.empty.withDefault(_ => value))
 
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because fast check
+  case class MutableQ[S, A](var initialConfig: Map[(S, A), Double]) extends Q[S, A] {
+    override def apply(state: S, action: A): Double = initialConfig((state, action))
+    override def update(state: S, action: A, reward: Double): Q[S, A] = {
+      this.initialConfig += (state, action) -> reward
+      this
+    }
+    override def withDefault(value: => Double): Q[S, A] = MutableQ(initialConfig.withDefault(_ => value))
+    override def toString(): String = s"MutableQ { map : ${initialConfig.toString()} }"
+  }
+
   case class QMap[S, A](map: Map[(S, A), Double]) extends Q[S, A] {
     override def apply(state: S, action: A): Double = map((state, action))
     override def update(state: S, action: A, reward: Double): Q[S, A] =
@@ -48,9 +59,11 @@ object Q {
     }
     def asCsv[S: Show, A: Show](q: Q[S, A]): Option[String] = q match {
       case QMap(q) =>
-        Some(q.map { case ((state, action), value) =>
-          s"(${Show[S].show(state)}) ${Show[A].show(action)} ${value.toString}"
-        }.mkString("\n"))
+        Some(
+          q.map { case ((state, action), value) =>
+            s"(${Show[S].show(state)}) ${Show[A].show(action)} ${value.toString}"
+          }.mkString("\n")
+        )
       case _ => None
     }
   }
@@ -58,4 +71,6 @@ object Q {
   implicit def qRW[S: RW, A: RW]: RW[Q[S, A]] = macroRW[Q[S, A]]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit def qMapRW[S: RW, A: RW]: RW[QMap[S, A]] = macroRW[QMap[S, A]]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def mutableQMap[S: RW, A: RW]: RW[MutableQ[S, A]] = macroRW[MutableQ[S, A]]
 }

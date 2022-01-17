@@ -2,12 +2,12 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 40.0 }
-  learning_episodes: { formula: 500.0 }
+  last_greedy_episodes: { formula: 1.0 }
+  learning_episodes: { formula: 10.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
-  episode_length: &episode_length { formula: 60 }
+  episode_length: &episode_length { formula: 150 }
   learn: &learn
     language: scala
     formula: >
@@ -22,18 +22,18 @@ variables:
   trajectory_size: &trajectory_size { formula: 2 }
   qtable_folder: &qtable_folder { formula: "'\"qtables\"'" }
   clock_folder: &clock_folder { formula: "'\"clock\"'" }
-  right_source: &right_source { formula: 'learn ? 59 : 40'}
-  left_source: &left_source { formula: 'learn ? 40 : 59' }
+  right_source: &right_source { formula: 'learn ? 0 : 39'}
+  left_source: &left_source { formula: 'learn ? 39 : 0' }
   # PROGRAM VARIABLES
-  stop_right_source: &stop_right_source { formula: 20 }
+  stop_right_source: &stop_right_source { formula: 50 }
 
 ## Time variables
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.independent(0.5)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.2, 7)
 _beta: &beta >
-  it.unibo.learning.TimeVariable.independent(0.05)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.01, 7)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.independent(0.01)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.50, 3)
 
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)
@@ -44,11 +44,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 20, 5, 5, 3.5, 3.5, 0.0, 0.0] #large
-    # xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, xStep: Double, yStep: Double, xRand: Double, yRand: Double, xShift: Double, yShift: Double
-    #type: GeometricGradientRectangle
-    #parameters: [100, 0, 0, 100, 20, 0.6, 20, true, true]
-    #           # nodes, x, y, sizex, sizey, lambda, step, horizontal, decreasing
+    parameters: [0, 0, 200, 5, 5, 5, 0.5, 0.5, 0.0, 0.0] #large
     programs:
       - time-distribution: 1
         type: Event
@@ -108,7 +104,9 @@ deployments:
         concentration: 0
       - molecule: underestimate
         concentration: 0
-      - molecule: err_flexHopCount
+      - molecule: err_crf
+        concentration: 0
+      - molecule: err_bis
         concentration: 0
 export:
   - time
@@ -134,6 +132,9 @@ export:
     aggregators: [sum]
   - molecule: underestimate
     aggregators: [sum]
-  - molecule: err_flexHopCount
+  - molecule: err_crf
+    value-filter: onlyfinite
+    aggregators: [sum]
+  - molecule: err_bis
     value-filter: onlyfinite
     aggregators: [sum]
