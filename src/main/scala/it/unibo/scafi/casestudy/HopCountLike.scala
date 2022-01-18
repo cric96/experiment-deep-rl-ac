@@ -20,9 +20,6 @@ trait HopCountLike
     with FieldUtils
     with TemporalStateManagement
     with FixedGradients {
-  // Type alias
-  type State = List[Int]
-  type Action = Int
   // Implicit context variable
   implicit lazy val rand: Random = randomGen
   // Storage
@@ -30,22 +27,17 @@ trait HopCountLike
   // Variable loaded by alchemist configuration.
   lazy val learnCondition: Boolean = node.get[java.lang.Boolean]("learn")
   lazy val initialValue: Double = node.get[Double]("initial_value")
-  // Other constant
-  lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
-  lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
   // Learning constants
   lazy val alpha: TimeVariable[Double] = node.get("alpha")
   lazy val beta: TimeVariable[Double] = node.get("beta")
   lazy val epsilon: TimeVariable[Double] = node.get("epsilon")
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
-  // Q Learning data
-  lazy val actions: NonEmptySet[Action] = node.get("actions")
   // Constants
   val maxDiff = 100
   // Store data
   def endHandler: EndHandler[_]
 
-  def aggregateProgram(): RoundData[State, Action, Double]
+  def aggregateProgram(): Unit
 
   final override def main(): Any =
     (aggregateProgram(), endHandler)

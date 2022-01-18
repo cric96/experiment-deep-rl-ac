@@ -1,72 +1,88 @@
 package it.unibo.scafi.casestudy
 
-import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.ID
+import cats.data.NonEmptySet
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ID, Metric}
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Q, QLearning}
-import it.unibo.scafi.casestudy.CrfLikeDefinition.{State, actionSpace}
-import it.unibo.scafi.casestudy.LearningProcess.RoundData
+import it.unibo.learning.QLearning
+import it.unibo.scafi.casestudy.CrfLikeDefinition.State
 
-class SwapSourceOnline extends SwapSourceLike with SarsaBased {
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  lazy val radius: Double = node.get("range")
+class SwapSourceOnline extends SwapSourceLike {
+  // Constants
   val maxValue = 5
-  lazy val crfLikeLearning = QLearning.Hysteretic[CrfLikeDefinition.State, CrfLikeDefinition.Action](
-    CrfLikeDefinition.actionSpace(2),
-    alpha.value(episode),
-    beta.value(episode),
-    gamma
-  )
+  val maxUpdateVelocity = 2
+  val hopCountMetric: Metric = () => 1
+  val hopRadius = 1
+  /// Learning definition
+  // Plain RL
+  lazy val learningAlgorithm: QLearning.Hysteretic[PlainRLDefinition.State, PlainRLDefinition.Action] =
+    QLearning.Hysteretic(actions, alpha.value(episode), beta.value(episode), gamma)
+  lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
+  lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
+  // CRF Like RL
+  lazy val crfLikeLearning: QLearning.Hysteretic[State, CrfLikeDefinition.Action] =
+    QLearning.Hysteretic(
+      CrfLikeDefinition.actionSpace(maxUpdateVelocity),
+      alpha.value(episode),
+      beta.value(episode),
+      gamma
+    )
+  // Alchemist molecules
+  lazy val actions: NonEmptySet[PlainRLDefinition.Action] = node.get("actions")
+  lazy val radius: Double = node.get("range")
+  lazy val shouldLearn: Boolean = learnCondition && !source
+
   // Aggregate program
-  override def aggregateProgram(): RoundData[State, Action, Double] = {
-    val classicHopCount = hopGradient(source) // BASELINE
+  override def aggregateProgram(): Unit = {
+    ///// BASELINE
+    val classicHopCount = hopGradient(source)
+    ///// OPTIMAL REFERENCE
     val hopCountWithoutRightSource =
       hopGradient(mid() == leftSrc) // optimal gradient when RIGHT_SRC stops being a source
     val refHopCount = if (passedTime() >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
-    val shouldLearn = learnCondition && !source
     val eps = if (learnCondition) { epsilon.value(episode) }
     else { 0.0 }
     ///// LEARNING PROBLEMS DEFINITION
-    // Crf like definition
+    // Crf like learning definition
     val crfProblem = learningProcess(GlobalQ.crfLikeQ)
       .stateDefinition(data => crfLikeState(data, maxValue))
       .rewardDefinition(out => rewardSignal(refHopCount.toInt, out))
       .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
       .initialConditionDefinition(State(None, None), Double.PositiveInfinity)
-    // Learning definition
+    // Old learning definition
     val learningProblem = learningProcess(GlobalQ.standardQ)
       .stateDefinition(plainStateFromWindow)
       .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
-      .actionEffectDefinition((output, state, action) => minHoodPlus(nbr(output)) + action + 1)
+      .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
-    // RL Program execution
-    val (roundData, trajectory) = learningProblem.step(learningAlgorithm, eps, !shouldLearn)
-    // Another Rl
-    val (roundAnother, _) = crfProblem.step(crfLikeLearning, eps, !shouldLearn)
-    val crf = crfGradient(40.0 / 12.0)(source = source, () => 1)
-    val bis = bisGradient(1)(source, () => 1)
-    val rlBasedError = refHopCount - roundData.output
+    // RL Progression
+    val (plainLearning, trajectory) = learningProblem.step(learningAlgorithm, eps, !shouldLearn)
+    val (crfLikeLearning, _) = crfProblem.step(crfLikeLearning, eps, !shouldLearn)
+    //// STATE OF THE ART
+    val crf = crfGradient(40.0 / 12.0)(source = source, hopCountMetric)
+    val bis = bisGradient(hopRadius)(source, hopCountMetric)
+    //// ERROR ESTIMATION COUNT
+    val rlBasedError = refHopCount - plainLearning.output
     val overEstimate =
       if (rlBasedError > 0) { 1 }
       else { 0 }
     val underEstimate =
       if (rlBasedError < 0) { 1 }
       else { 0 }
-    // Store alchemist info
-    node.put("overestimate", overEstimate)
-    node.put("underestimate", underEstimate)
-    node.put("qtable", roundData.q)
+    //// DATA STORAGE
+    node.put("qtable", plainLearning.q)
     node.put("classicHopCount", classicHopCount)
-    node.put("rlbasedHopCount", roundData.output)
-    node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
-    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - roundAnother.output))
+    node.put("rlbasedHopCount", plainLearning.output)
     node.put(s"passed_time", passedTime())
     node.put("src", source)
-    node.put("action", roundData.action)
+    node.put("action", plainLearning.action)
+    node.put("trajectory", trajectory)
+    node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
+    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - crfLikeLearning.output))
     node.put(s"err_crf", Math.abs(refHopCount - crf.toInt))
     node.put(s"err_bis", Math.abs(refHopCount - bis.toInt))
-    node.put(s"err_oldRl", Math.abs(refHopCount - roundData.output))
-    node.put("trajectory", trajectory)
-    roundData
+    node.put(s"err_oldRl", Math.abs(refHopCount - plainLearning.output))
+    node.put("overestimate", overEstimate)
+    node.put("underestimate", underEstimate)
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -84,7 +100,7 @@ class SwapSourceOnline extends SwapSourceLike with SarsaBased {
     storeMonitor
   }
 
-  protected def plainStateFromWindow(output: Double): State = {
+  protected def plainStateFromWindow(output: Double): PlainRLDefinition.State = {
     val minOutput = minHood(nbr(output))
     val recent = recentValues(windowDifferenceSize, minOutput)
     val oldState = recent.headOption.getOrElse(minOutput)
