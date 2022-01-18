@@ -55,13 +55,13 @@ class SwapSourceOnline extends SwapSourceLike {
       .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Progression
-    val (plainLearning, trajectory) = learningProblem.step(learningAlgorithm, eps, !shouldLearn)
-    val (crfLikeLearning, _) = crfProblem.step(crfLikeLearning, eps, !shouldLearn)
+    val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, !shouldLearn)
+    val (crfLikeLearningResult, _) = crfProblem.step(crfLikeLearning, eps, !shouldLearn)
     //// STATE OF THE ART
     val crf = crfGradient(40.0 / 12.0)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
     //// ERROR ESTIMATION COUNT
-    val rlBasedError = refHopCount - plainLearning.output
+    val rlBasedError = refHopCount - plainLearningResult.output
     val overEstimate =
       if (rlBasedError > 0) { 1 }
       else { 0 }
@@ -69,18 +69,18 @@ class SwapSourceOnline extends SwapSourceLike {
       if (rlBasedError < 0) { 1 }
       else { 0 }
     //// DATA STORAGE
-    node.put("qtable", plainLearning.q)
+    node.put("qtable", plainLearningResult.q)
     node.put("classicHopCount", classicHopCount)
-    node.put("rlbasedHopCount", plainLearning.output)
+    node.put("rlbasedHopCount", plainLearningResult.output)
     node.put(s"passed_time", passedTime())
     node.put("src", source)
-    node.put("action", plainLearning.action)
+    node.put("action", plainLearningResult.action)
     node.put("trajectory", trajectory)
     node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
-    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - crfLikeLearning.output))
+    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - crfLikeLearningResult.output))
     node.put(s"err_crf", Math.abs(refHopCount - crf.toInt))
     node.put(s"err_bis", Math.abs(refHopCount - bis.toInt))
-    node.put(s"err_oldRl", Math.abs(refHopCount - plainLearning.output))
+    node.put(s"err_oldRl", Math.abs(refHopCount - plainLearningResult.output))
     node.put("overestimate", overEstimate)
     node.put("underestimate", underEstimate)
   }
