@@ -1,7 +1,6 @@
 package it.unibo.cats
 
 import cats.data.NonEmptyList
-
 import scala.util.Random
 
 object TypeEnrichment {

@@ -1,7 +1,6 @@
 package it.unibo.scafi.casestudy
 
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
-import it.unibo.learning.ReinforcementLearning.Ops
 import it.unibo.learning._
 import it.unibo.scafi.casestudy.LearningProcess.{BuilderFinalizer, LearningContext, RoundData, Trajectory}
 import monocle.syntax.all._

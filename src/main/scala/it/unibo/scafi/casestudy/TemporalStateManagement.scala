@@ -1,7 +1,6 @@
 package it.unibo.scafi.casestudy
 
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
-
 import scala.collection.immutable.Queue
 
 trait TemporalStateManagement {

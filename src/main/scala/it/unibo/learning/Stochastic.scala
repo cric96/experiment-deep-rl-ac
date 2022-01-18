@@ -1,7 +1,6 @@
 package it.unibo.learning
 
 import cats.data.NonEmptyList
-
 import scala.util.Random
 
 object Stochastic {

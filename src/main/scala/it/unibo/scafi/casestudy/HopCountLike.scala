@@ -1,11 +1,8 @@
 package it.unibo.scafi.casestudy
 
-import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Episode, Q, TimeVariable}
-import it.unibo.scafi.casestudy.LearningProcess.RoundData
-import it.unibo.storage.LocalStorage
+import it.unibo.learning.{Episode, TimeVariable}
 
 import scala.util.Random
 

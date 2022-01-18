@@ -3,8 +3,8 @@ package it.unibo.learning
 import cats.data.NonEmptySet
 import it.unibo.cats.TypeEnrichment.RichNonEmptyList
 import it.unibo.learning.ReinforcementLearning.Ops
-
 import scala.util.Random
+
 object QLearning {
   private[QLearning] def max[S, A](q: Q[S, A], actions: NonEmptySet[A], stateTPlus: S)(implicit
       random: Random
