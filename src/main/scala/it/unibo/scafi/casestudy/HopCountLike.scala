@@ -32,8 +32,6 @@ trait HopCountLike
   lazy val beta: TimeVariable[Double] = node.get("beta")
   lazy val epsilon: TimeVariable[Double] = node.get("epsilon")
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
-  // Constants
-  val maxDiff = 100
   // Store data
   def endHandler: EndHandler[_]
 

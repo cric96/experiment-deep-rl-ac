@@ -9,6 +9,7 @@ import it.unibo.scafi.casestudy.CrfLikeDefinition.State
 class SwapSourceOnline extends SwapSourceLike {
   // Constants
   val maxValue = 5
+  val maxDiff = 100
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => 1
   val hopRadius = 1
