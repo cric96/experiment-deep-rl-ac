@@ -56,8 +56,8 @@ class SwapSourceOnline extends SwapSourceLike {
       .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Progression
-    val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, !shouldLearn)
-    val (crfLikeLearningResult, _) = crfProblem.step(crfLikeLearning, eps, !shouldLearn)
+    val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, shouldLearn)
+    val (crfLikeLearningResult, _) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
     //// STATE OF THE ART
     val crf = crfGradient(40.0 / 12.0)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
@@ -133,10 +133,10 @@ class SwapSourceOnline extends SwapSourceLike {
       output + action.upVelocity
     } else {
       val data = excludingSelf.reifyField(nbr(output))
-      val haveLeft = data.find(data => data._1 < mid() && !action.ignoreLeft).map(_._2)
-      val haveRight = data.find(data => data._1 > mid() && !action.ignoreRight).map(_._2)
+      val left = data.find(data => data._1 < mid() && !action.ignoreLeft).map(_._2)
+      val right = data.find(data => data._1 > mid() && !action.ignoreRight).map(_._2)
       val minValue =
-        List(haveLeft, haveRight).collect { case Some(data) => data }.minOption.getOrElse(Double.PositiveInfinity)
+        List(left, right).collect { case Some(data) => data }.minOption.getOrElse(Double.PositiveInfinity)
       minValue + 1
     }
   }
