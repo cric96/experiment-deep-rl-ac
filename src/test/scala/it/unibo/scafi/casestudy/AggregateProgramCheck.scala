@@ -23,7 +23,7 @@ class AggregateProgramCheck
       .initialConditionDefinition(0, Double.PositiveInfinity)
     val (result, _) =
       if (learn) {
-        learningProblem.learn(qLearning, 0.1)
+        learningProblem.step(qLearning, 0.1)
       } else {
         learningProblem.actGreedy(qLearning)
       }

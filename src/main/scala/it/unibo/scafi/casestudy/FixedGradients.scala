@@ -78,7 +78,7 @@ trait FixedGradients extends GenericUtils with StateManagement {
     }._1
   }
 
-  def crfGradient(raisingSpeed: Double = 5, lagMetric: => Double = deltaTime().toMillis.toDouble)(
+  def crfGradient(raisingSpeed: Double = 5)(
       source: Boolean,
       metric: Metric = nbrRange
   ): Double =
@@ -89,7 +89,7 @@ trait FixedGradients extends GenericUtils with StateManagement {
         val lastRoundTick = deltaTime()
         val constraints = foldhoodPlus[List[Constraint]](List.empty)(_ ++ _) {
           val (nbrg, d) = (nbr(g), metric())
-          mux(nbrg + d + speed * lastRoundTick <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
+          mux(nbrg + d + speed * (lastRoundTick + nbrLag()) <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
         }
         if (constraints.isEmpty) {
           (g + raisingSpeed * lastRoundTick, raisingSpeed)

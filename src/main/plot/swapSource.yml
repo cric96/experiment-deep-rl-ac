@@ -10,15 +10,16 @@ the_plots_labels:
   - 'overEstimate'
   - 'error flex'
   - 'error bis'
+  - 'error old rl'
 the_plots_formats:
-  - [0,4,5,9,10]
+  - [0,4,5,9,10,11]
   #- [0,11,12,13]
 #  - [0,2,3,4,5]
 #y_labels: ['# of requests', '# of requests','','% of utilization of workers']
 #file_suffixes:
 #  - errors
 line_widths:
-  - [2,2,2,2,2,2,2,2,2,2,2,2]
+  - [2,2,2,2,2,2,2,2,2,2,2,2,2]
 default_colors: &default_colors ["black", "black", "orange","red","green",
                                  "black", "blue","red",
                                  "magenta", "brown", "orange", "green", "brown"]

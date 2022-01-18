@@ -27,11 +27,14 @@ trait HopCountLearning {
 
   def learningProcess[S, A](initialQ: Q[S, A]): LearningProcess.QBuilderStep[S, A, Double] =
     LearningProcess.QBuilderStep(initialQ)
-
+  @SuppressWarnings(
+    Array("org.wartremover.warts.DefaultArguments", "org.wartremover.warts.TraversableOps")
+  )
   implicit class HopCountFinalizer[S, A](ctx: LearningContext[S, A, Double]) extends BuilderFinalizer[S, A, Double] {
-    override def learn[T](
+    override def step[T](
         learning: Sars.Type[S, A, T],
-        epsilon: Double
+        epsilon: Double,
+        learn: Boolean = false
     )(implicit rnd: Random): (RoundData[S, A, Double], Trajectory[S, A]) = {
       val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q)
       val epsilonGreedy = Policy.epsilonGreedy[S, A](learning.actions, epsilon)
@@ -44,14 +47,18 @@ trait HopCountLearning {
           List.empty
         )
       rep(stateEvolution) { ev =>
-        val nextOutput = hopCount(ev.action, ctx)
+        val nextOutput = hopCount(ev.state, ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput)
         val reward = ctx.rewardSignal(nextOutput)
         // Agent update
-        val updateTargetLearning = learning.improve(
-          (ev.state, ev.action, reward, stateTPlus),
+        val updateTargetLearning = branch(learn) {
+          learning.improve(
+            (ev.state, ev.action, reward, stateTPlus),
+            ev.target
+          )
+        } {
           ev.target
-        )
+        }
         val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target))
         ev
           .focus(_.trajectory)
@@ -67,46 +74,9 @@ trait HopCountLearning {
       }.view(learning.ops)
     }
 
-    override def actGreedy[T](learning: Sars.Type[S, A, T])(implicit
-        rand: Random
-    ): (RoundData[S, A, Double], Trajectory[S, A]) = actWith(learning.ops, Policy.greedy(learning.actions))
-
-    override def actWith[T](
-        learningInstance: Ops[S, A, T],
-        policy: Policy.QBased[S, A]
-    )(implicit
-        rand: Random
-    ): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = policy(ctx.initialCondition.state, ctx.q)
-      val stateEvolution =
-        HopCountState[S, A, T](
-          learningInstance.initTargetFromQ(ctx.q),
-          ctx.initialCondition.state,
-          action,
-          ctx.initialCondition.output,
-          List.empty
-        )
-      rep(stateEvolution) { ev =>
-        val nextOutput = hopCount(ev.action, ctx)
-        val reward = ctx.rewardSignal(nextOutput)
-        val stateTPlus = ctx.statePolicy(nextOutput)
-        val nextAction =
-          policy(stateTPlus, learningInstance.extractQFromTarget(ev.target))
-        ev
-          .focus(_.trajectory)
-          .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
-          .focus(_.output)
-          .replace(nextOutput)
-          .focus(_.action)
-          .replace(nextAction)
-          .focus(_.state)
-          .replace(stateTPlus)
-      }.view(learningInstance)
-    }
-
-    private def hopCount(action: A, ctx: LearningContext[S, A, Double]): Double = {
+    private def hopCount(state: S, action: A, ctx: LearningContext[S, A, Double]): Double = {
       rep(ctx.initialCondition.output) { hopCount =>
-        mux(source)(0.0)(ctx.actionEffect(minHoodPlus(nbr(hopCount)), action))
+        mux(source)(0.0)(ctx.actionEffect(hopCount, state, action))
       }
     }
   }

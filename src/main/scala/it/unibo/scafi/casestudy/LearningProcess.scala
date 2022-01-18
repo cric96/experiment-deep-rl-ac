@@ -26,7 +26,7 @@ object LearningProcess {
       statePolicy: O => S,
       rewardSignal: O => Double
   ) {
-    def actionEffectDefinition(action: (O, A) => O): InitialConfigurationStep[S, A, O] =
+    def actionEffectDefinition(action: (O, S, A) => O): InitialConfigurationStep[S, A, O] =
       InitialConfigurationStep(q, statePolicy, rewardSignal, action)
   }
 
@@ -34,7 +34,7 @@ object LearningProcess {
       q: Q[S, A],
       statePolicy: O => S,
       rewardSignal: O => Double,
-      actionEffect: (O, A) => O
+      actionEffect: (O, S, A) => O
   ) {
     def initialConditionDefinition(initialState: S, initialOutput: O): LearningContext[S, A, O] =
       LearningContext(q, statePolicy, rewardSignal, actionEffect, InitialCondition(initialState, initialOutput))
@@ -44,21 +44,13 @@ object LearningProcess {
       q: Q[S, A],
       statePolicy: O => S,
       rewardSignal: O => Double,
-      actionEffect: (O, A) => O,
+      actionEffect: (O, S, A) => O,
       initialCondition: InitialCondition[S, O]
   )
 
   trait BuilderFinalizer[S, A, O] {
-    def learn[T](learning: Sars.Type[S, A, T], epsilon: Double)(implicit
+    def step[T](learning: Sars.Type[S, A, T], epsilon: Double, learnCondition: Boolean)(implicit
         rnd: Random
-    ): (RoundData[S, A, O], Trajectory[S, A])
-
-    def actGreedy[T](learning: Sars.Type[S, A, T])(implicit
-        rand: Random
-    ): (RoundData[S, A, O], Trajectory[S, A])
-
-    def actWith[T](learningOps: Ops[S, A, T], policy: Policy.QBased[S, A])(implicit
-        rand: Random
     ): (RoundData[S, A, O], Trajectory[S, A])
   }
 }

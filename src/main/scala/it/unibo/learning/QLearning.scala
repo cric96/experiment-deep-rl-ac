@@ -31,7 +31,6 @@ object QLearning {
       val update = oldQValue + alpha * rewardTPlus + gamma * bestNextValue - oldQValue
       q.update(stateT, actionT, update)
     }
-
   }
 
   class Hysteretic[S, A](
