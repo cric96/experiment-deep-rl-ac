@@ -49,7 +49,6 @@ object QLearning {
       val learningFactor =
         if (diff >= 0) { alpha }
         else { beta }
-
       val hystereticUpdate = learningFactor * diff
       val update = oldQValue + hystereticUpdate
       q.update(stateT, actionT, update)
