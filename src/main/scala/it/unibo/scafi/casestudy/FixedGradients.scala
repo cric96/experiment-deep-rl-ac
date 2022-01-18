@@ -48,7 +48,7 @@ trait FixedGradients extends GenericUtils with StateManagement {
       raisingSpeed: Double = 5,
       lagMetric: => Double = nbrLag().toUnit(TimeUnit.MILLISECONDS)
   ): FixedGradient =
-    FixedGradient(crfGradient(raisingSpeed, lagMetric), source = false, nbrRange)
+    FixedGradient(crfGradient(raisingSpeed), source = false, nbrRange)
   def FlexGradient(epsilon: Double = 0.5, delta: Double = 1.0, communicationRadius: Double = 1.0): FixedGradient =
     FixedGradient(flexGradient(epsilon, delta, communicationRadius), source = false, nbrRange)
   def SvdGradient(lagMetric: => Double = nbrLag().toUnit(TimeUnit.MILLISECONDS)): FixedGradient =
