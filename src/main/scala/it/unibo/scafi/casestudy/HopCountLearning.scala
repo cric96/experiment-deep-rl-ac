@@ -47,7 +47,7 @@ trait HopCountLearning {
         )
       rep(stateEvolution) { ev =>
         val nextOutput = hopCount(ev.state, ev.action, ctx)
-        val stateTPlus = ctx.statePolicy(nextOutput)
+        val stateTPlus = ctx.statePolicy(nextOutput, ev.action)
         val reward = ctx.rewardSignal(nextOutput)
         // Agent update
         val updateTargetLearning = branch(learn) {

@@ -9,6 +9,7 @@ import scala.language.reflectiveCalls
 object CrfLikeDefinition {
   implicit def ordering: Ordering[Action] = Ordering.by(a => (a.ignoreLeft, a.ignoreRight, a.upVelocity))
   case class State(left: Option[Int], right: Option[Int])
+  type StateWithAction = List[Any]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because fast check
   case class Action(ignoreLeft: Boolean = false, ignoreRight: Boolean = false, upVelocity: Int = 0)
 
@@ -20,10 +21,14 @@ object CrfLikeDefinition {
       right <- booleanValues
       up <- elements
     } yield Action(left, right, up)
-    NonEmptySet.fromSetUnsafe(SortedSet(actionSpace: _*))
+
+    @SuppressWarnings(Array("org.wartremover.warts.All")) // because fast check
+    val withoutUselessAction =
+      actionSpace.filter(action => (action.ignoreRight || action.ignoreRight) || action.upVelocity == velocities.head)
+    NonEmptySet.fromSetUnsafe(SortedSet(withoutUselessAction: _*))
   }
-  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
-  implicit def neighborhood: RW[State] = macroRW[State]
+  //@SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  //implicit def neighborhood: RW[State] = macroRW[State]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit def action: RW[Action] = macroRW[Action]
 }

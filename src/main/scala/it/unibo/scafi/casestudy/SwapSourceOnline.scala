@@ -28,12 +28,12 @@ class SwapSourceOnline extends SwapSourceLike {
   // CRF Like RL
   lazy val crfLikeLearning: QLearning.Hysteretic[CrfLikeDefinition.State, CrfLikeDefinition.Action] =
     QLearning.Hysteretic(
-      CrfLikeDefinition.actionSpace(List(2, 4)),
+      CrfLikeDefinition.actionSpace(List(2, 4, 6)),
       alpha.value(episode),
       beta.value(episode),
       gamma
     )
-
+  // World Like view
   lazy val worldView: QLearning.Plain[GlobalView.State, GlobalView.Action] = QLearning.Plain(
     CrfLikeDefinition.actionSpace(List(2, 4)),
     alpha.value(episode),
@@ -56,20 +56,20 @@ class SwapSourceOnline extends SwapSourceLike {
     else { 0.0 }
     ///// LEARNING PROBLEMS DEFINITION
     val worldViewProblem = learningProcess(GlobalQ.worldQ)
-      .stateDefinition(_ => globalState)
+      .stateDefinition((_, _) => globalState)
       .rewardDefinition(out => rewardSignal(refHopCount, out))
       .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // Crf like learning definition
     val crfProblem = learningProcess(GlobalQ.crfLikeQ)
-      .stateDefinition(data => crfLikeState(data, maxValue))
+      .stateDefinition((data, _) => crfLikeState(data, maxValue))
       //.rewardDefinition(out => localSignal(out))
       .rewardDefinition(out => rewardSignal(refHopCount, out))
       .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
-      .initialConditionDefinition(State(None, None), Double.PositiveInfinity)
+      .initialConditionDefinition(CrfLikeDefinition.State(None, None), Double.PositiveInfinity)
     // Old learning definition
     val learningProblem = learningProcess(GlobalQ.standardQ)
-      .stateDefinition(plainStateFromWindow)
+      .stateDefinition((data, _) => plainStateFromWindow(data))
       //.rewardDefinition(output => localSignal(output))
       .rewardDefinition(out => rewardSignal(refHopCount, out))
       .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
@@ -172,6 +172,35 @@ class SwapSourceOnline extends SwapSourceLike {
     CrfLikeDefinition.State(left, right)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
+  protected def crfWithAction(output: Double, action: CrfLikeDefinition.Action): CrfLikeDefinition.StateWithAction = {
+    val other = excludingSelf.reifyField((nbr(output), nbr(action)))
+    def align(option: Option[(ID, (Double, _))]): Option[Int] = option
+      .map(_._2._1)
+      .map(_ - output)
+      .map(diff =>
+        if (diff.abs > maxValue) { maxValue * diff.sign }
+        else { diff }
+      )
+      .map(_.toInt)
+    val left = other.find(_._1 < mid())
+    val right = other.find(_._1 > mid())
+    val leftOutput = align(left)
+    val rightOutput = align(right)
+    val leftAction = left.map(_._2._2).map(_.upVelocity)
+    val rightAction = right.map(_._2._2).map(_.upVelocity)
+    List[Any](leftOutput, leftAction, rightOutput, rightAction)
+  }
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
+  protected def globalState: List[Int] = {
+    val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
+    val prevOutput = nodes.collect {
+      case node if node.has("globalView") => node.get[Int]("globalView")
+      case _                              => Double.PositiveInfinity.toInt
+    }
+    prevOutput
+  }
+
   protected def crfActionEffectLike(output: Double, action: CrfLikeDefinition.Action): Double = {
     if (action.ignoreLeft && action.ignoreRight) {
       output + action.upVelocity
@@ -183,15 +212,6 @@ class SwapSourceOnline extends SwapSourceLike {
     }
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  protected def globalState: List[Int] = {
-    val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
-    val prevOutput = nodes.collect {
-      case node if node.has("globalView") => node.get[Int]("globalView")
-      case _                              => Double.PositiveInfinity.toInt
-    }
-    prevOutput
-  }
   protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =
     if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
     else { -1 }
@@ -220,4 +240,5 @@ class SwapSourceOnline extends SwapSourceLike {
     if (result.isInfinite) { alchemistEnvironment.getNodes.size() }
     else { result }
   }
+
 }

@@ -9,12 +9,12 @@ object LearningProcess {
   case class RoundData[S, A, O](q: Q[S, A], output: O, action: A)
   type Trajectory[S, A] = Seq[(S, A, Double)]
   case class QBuilderStep[S, A, O](q: Q[S, A]) {
-    def stateDefinition(state: O => S): RewardDefinitionStep[S, A, O] = RewardDefinitionStep(q, state)
+    def stateDefinition(state: (O, A) => S): RewardDefinitionStep[S, A, O] = RewardDefinitionStep(q, state)
   }
 
   case class RewardDefinitionStep[S, A, O](
       q: Q[S, A],
-      statePolicy: O => S
+      statePolicy: (O, A) => S
   ) {
     def rewardDefinition(rewardSignal: O => Double): ActionEffectStep[S, A, O] =
       ActionEffectStep(q, statePolicy, rewardSignal)
@@ -22,7 +22,7 @@ object LearningProcess {
 
   case class ActionEffectStep[S, A, O](
       q: Q[S, A],
-      statePolicy: O => S,
+      statePolicy: (O, A) => S,
       rewardSignal: O => Double
   ) {
     def actionEffectDefinition(action: (O, S, A) => O): InitialConfigurationStep[S, A, O] =
@@ -31,7 +31,7 @@ object LearningProcess {
 
   case class InitialConfigurationStep[S, A, O](
       q: Q[S, A],
-      statePolicy: O => S,
+      statePolicy: (O, A) => S,
       rewardSignal: O => Double,
       actionEffect: (O, S, A) => O
   ) {
@@ -41,7 +41,7 @@ object LearningProcess {
 
   case class LearningContext[S, A, O](
       q: Q[S, A],
-      statePolicy: O => S,
+      statePolicy: (O, A) => S,
       rewardSignal: O => Double,
       actionEffect: (O, S, A) => O,
       initialCondition: InitialCondition[S, O]
