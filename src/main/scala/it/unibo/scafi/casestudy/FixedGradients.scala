@@ -12,6 +12,7 @@ trait FixedGradients extends GenericUtils with StateManagement {
   self: FieldCalculusSyntax with StandardSensors with BlockG =>
   import Builtins._
 
+  val DEFAULT_CRF_RAISING_SPEED: Double = 5.0
   case class FixedGradient(
       algorithm: (Boolean, () => Double) => Double,
       source: Boolean = false,
@@ -78,21 +79,34 @@ trait FixedGradients extends GenericUtils with StateManagement {
     }._1
   }
 
-  def crfGradient(raisingSpeed: Double = 5)(
+  case class RaisingDist(dist: Double, raising: Boolean) {
+    def +(delta: Double): RaisingDist =
+      RaisingDist(dist + delta, raising)
+    def min(o: RaisingDist): RaisingDist = {
+      if (raising == o.raising) {
+        if (dist < o.dist) this else o
+      } else {
+        if (raising) o else this
+      }
+    }
+  }
+
+  def crfGradient(raisingSpeed: Double = DEFAULT_CRF_RAISING_SPEED, lagMetric: => Double = nbrLag().toMillis.toDouble)(
       source: Boolean,
       metric: Metric = nbrRange
   ): Double =
     rep((Double.PositiveInfinity, 0.0)) { case (g, speed) =>
       mux(source)((0.0, 0.0)) {
         implicit def durationToDouble(fd: FiniteDuration): Double = fd.toMillis.toDouble / 1000.0
-        case class Constraint(nbr: ID, gradient: Double, nbrDistance: Double)
-        val lastRoundTick = deltaTime()
+        final case class Constraint(nbr: ID, gradient: Double, nbrDistance: Double)
+
         val constraints = foldhoodPlus[List[Constraint]](List.empty)(_ ++ _) {
           val (nbrg, d) = (nbr(g), metric())
-          mux(nbrg + d + speed * (lastRoundTick + nbrLag()) <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
+          mux(nbrg + d + speed * lagMetric / 1000.0 <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
         }
+
         if (constraints.isEmpty) {
-          (g + raisingSpeed * lastRoundTick, raisingSpeed)
+          (g + raisingSpeed * deltaTime(), raisingSpeed)
         } else {
           (constraints.map(c => c.gradient + c.nbrDistance).min, 0.0)
         }

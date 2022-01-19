@@ -66,7 +66,7 @@ class SwapSourceOnline extends SwapSourceLike {
     val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, shouldLearn)
     val (crfLikeLearningResult, crfLikeTrajectory) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
     //// STATE OF THE ART
-    val crf = crfGradient(40.0 / 12.0)(source = source, hopCountMetric)
+    val crf = crfGradient(40 / 12.0)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
     //// ERROR ESTIMATION COUNT
     val rlBasedError = refHopCount - plainLearningResult.output
@@ -92,8 +92,8 @@ class SwapSourceOnline extends SwapSourceLike {
     node.put(s"err_classicHopCount", outputEvaluation(refHopCount, classicHopCount))
     node.put(s"err_rlbasedHopCount", outputEvaluation(refHopCount, crfLikeLearningResult.output))
     node.put(s"err_oldRl", outputEvaluation(refHopCount, plainLearningResult.output))
-    node.put(s"err_crf", outputEvaluation(refHopCount, crf.toInt))
-    node.put(s"err_bis", outputEvaluation(refHopCount, bis.toInt)) // put bis
+    node.put(s"err_crf", outputEvaluation(refHopCount.toInt, crf.toInt))
+    node.put(s"err_bis", outputEvaluation(refHopCount.toInt, bis.toInt))
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding

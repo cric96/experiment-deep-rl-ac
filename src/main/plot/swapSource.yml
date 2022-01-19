@@ -22,7 +22,7 @@ line_widths:
   - [2,2,2,2,2,2,2,2,2,2,2,2,2]
 default_colors: &default_colors ["black", "black", "orange","red","green",
                                  "black", "blue","red",
-                                 "magenta", "brown", "orange", "green", "brown"]
+                                 "magenta", "cyan", "orange", "brown", "yellow"]
 the_plots_colors:
   - *default_colors
 legend_position:
