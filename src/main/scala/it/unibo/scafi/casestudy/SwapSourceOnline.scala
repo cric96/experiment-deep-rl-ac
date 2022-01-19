@@ -2,9 +2,10 @@ package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
+import it.unibo.alchemist.model.interfaces.Neighborhood
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ID, Metric}
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Q, QLearning}
+import it.unibo.learning.{Policy, Q, QLearning}
 import it.unibo.scafi.casestudy.CrfLikeDefinition.State
 import it.unibo.scafi.casestudy.LearningProcess.Trajectory
 
@@ -25,13 +26,19 @@ class SwapSourceOnline extends SwapSourceLike {
   lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
   lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
   // CRF Like RL
-  lazy val crfLikeLearning: QLearning.Hysteretic[State, CrfLikeDefinition.Action] =
+  lazy val crfLikeLearning: QLearning.Hysteretic[CrfLikeDefinition.State, CrfLikeDefinition.Action] =
     QLearning.Hysteretic(
-      CrfLikeDefinition.actionSpace(List(2)),
+      CrfLikeDefinition.actionSpace(List(2, 4)),
       alpha.value(episode),
       beta.value(episode),
       gamma
     )
+
+  lazy val worldView: QLearning.Plain[GlobalView.State, GlobalView.Action] = QLearning.Plain(
+    CrfLikeDefinition.actionSpace(List(2, 4)),
+    alpha.value(episode),
+    gamma
+  )
   // Alchemist molecules
   lazy val actions: NonEmptySet[PlainRLDefinition.Action] = node.get("actions")
   lazy val radius: Double = node.get("range")
@@ -48,6 +55,11 @@ class SwapSourceOnline extends SwapSourceLike {
     val eps = if (learnCondition) { epsilon.value(episode) }
     else { 0.0 }
     ///// LEARNING PROBLEMS DEFINITION
+    val worldViewProblem = learningProcess(GlobalQ.worldQ)
+      .stateDefinition(_ => globalState)
+      .rewardDefinition(out => rewardSignal(refHopCount, out))
+      .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
+      .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // Crf like learning definition
     val crfProblem = learningProcess(GlobalQ.crfLikeQ)
       .stateDefinition(data => crfLikeState(data, maxValue))
@@ -65,6 +77,7 @@ class SwapSourceOnline extends SwapSourceLike {
     // RL Progression
     val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, shouldLearn)
     val (crfLikeLearningResult, crfLikeTrajectory) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
+    //val (worldLearningResult, worldTrajectory) = worldViewProblem.step(worldView, eps, shouldLearn)
     //// STATE OF THE ART
     val crf = crfGradient(40 / 12.0)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
@@ -80,6 +93,7 @@ class SwapSourceOnline extends SwapSourceLike {
     node.put("qtable", plainLearningResult.q)
     node.put("classicHopCount", classicHopCount)
     node.put("reference", refHopCount)
+    node.put("globalView", 0.0)
     node.put("rlbasedHopCount", crfLikeLearningResult.output)
     node.put("oldRlBased", plainLearningResult.output)
     node.put(s"passed_time", passedTime())
@@ -114,6 +128,13 @@ class SwapSourceOnline extends SwapSourceLike {
             )
           }
         }
+
+        val policy = Policy.greedy[CrfLikeDefinition.State, CrfLikeDefinition.Action](crfLikeLearning.actions)
+        val stateSpace = for {
+          l <- (-maxValue to maxValue)
+          r <- (-maxValue to maxValue)
+        } yield CrfLikeDefinition.State(Some(l), Some(r))
+        stateSpace.foreach(s => println(s, policy(s, GlobalQ.crfLikeQ)))
         //data.filter(_ => learnCondition).foreach { case (trj, ref, out) =>
         //  globalSignal(trj, GlobalQ.standardQ, learningAlgorithm, ref, out)
         //}
@@ -162,6 +183,15 @@ class SwapSourceOnline extends SwapSourceLike {
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
+  protected def globalState: List[Int] = {
+    val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
+    val prevOutput = nodes.collect {
+      case node if node.has("globalView") => node.get[Int]("globalView")
+      case _                              => Double.PositiveInfinity.toInt
+    }
+    prevOutput
+  }
   protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =
     if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
     else { -1 }
