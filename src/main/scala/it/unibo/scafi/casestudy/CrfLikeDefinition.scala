@@ -12,10 +12,9 @@ object CrfLikeDefinition {
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because fast check
   case class Action(ignoreLeft: Boolean = false, ignoreRight: Boolean = false, upVelocity: Int = 0)
 
-  def actionSpace(velocities: Int): NonEmptySet[Action] = {
-    require(velocities >= 1)
+  def actionSpace(velocities: List[Int]): NonEmptySet[Action] = {
     val booleanValues = List(false, true)
-    val elements = (1 to velocities).toList
+    val elements = velocities
     val actionSpace = for {
       left <- booleanValues
       right <- booleanValues

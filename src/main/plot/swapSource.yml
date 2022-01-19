@@ -2,13 +2,13 @@ the_plots_labels:
   - Time                 #0
   - 'mean ref HopCount'
   - 'mean classic'
-  - 'mean RL'
+  - 'mean crf like RL'
   - 'error HopCount'
-  - 'error RL HopCount'
+  - 'error crf like RL HopCount'
   - 'reward'
-  - 'underEstimate'
-  - 'overEstimate'
-  - 'error flex'
+  - 'overestimate'
+  - 'underestiamate'
+  - 'error crf'
   - 'error bis'
   - 'error old rl'
 the_plots_formats:

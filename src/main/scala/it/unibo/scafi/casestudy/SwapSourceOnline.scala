@@ -27,7 +27,7 @@ class SwapSourceOnline extends SwapSourceLike {
   // CRF Like RL
   lazy val crfLikeLearning: QLearning.Hysteretic[State, CrfLikeDefinition.Action] =
     QLearning.Hysteretic(
-      CrfLikeDefinition.actionSpace(maxUpdateVelocity),
+      CrfLikeDefinition.actionSpace(List(2)),
       alpha.value(episode),
       beta.value(episode),
       gamma
