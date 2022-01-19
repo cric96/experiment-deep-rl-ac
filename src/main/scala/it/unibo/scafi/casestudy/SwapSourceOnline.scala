@@ -1,10 +1,14 @@
 package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
+import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ID, Metric}
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.QLearning
+import it.unibo.learning.{Q, QLearning}
 import it.unibo.scafi.casestudy.CrfLikeDefinition.State
+import it.unibo.scafi.casestudy.LearningProcess.Trajectory
+
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 class SwapSourceOnline extends SwapSourceLike {
   // Constants
@@ -13,6 +17,7 @@ class SwapSourceOnline extends SwapSourceLike {
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => 1
   val hopRadius = 1
+  val globalReward = -100
   /// Learning definition
   // Plain RL
   lazy val learningAlgorithm: QLearning.Hysteretic[PlainRLDefinition.State, PlainRLDefinition.Action] =
@@ -46,18 +51,20 @@ class SwapSourceOnline extends SwapSourceLike {
     // Crf like learning definition
     val crfProblem = learningProcess(GlobalQ.crfLikeQ)
       .stateDefinition(data => crfLikeState(data, maxValue))
-      .rewardDefinition(out => rewardSignal(refHopCount.toInt, out))
+      //.rewardDefinition(out => localSignal(out))
+      .rewardDefinition(out => rewardSignal(refHopCount, out))
       .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
       .initialConditionDefinition(State(None, None), Double.PositiveInfinity)
     // Old learning definition
     val learningProblem = learningProcess(GlobalQ.standardQ)
       .stateDefinition(plainStateFromWindow)
-      .rewardDefinition(output => rewardSignal(refHopCount.toInt, output))
+      //.rewardDefinition(output => localSignal(output))
+      .rewardDefinition(out => rewardSignal(refHopCount, out))
       .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
       .initialConditionDefinition(List.empty, Double.PositiveInfinity)
     // RL Progression
     val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, shouldLearn)
-    val (crfLikeLearningResult, _) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
+    val (crfLikeLearningResult, crfLikeTrajectory) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
     //// STATE OF THE ART
     val crf = crfGradient(40.0 / 12.0)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
@@ -72,18 +79,21 @@ class SwapSourceOnline extends SwapSourceLike {
     //// DATA STORAGE
     node.put("qtable", plainLearningResult.q)
     node.put("classicHopCount", classicHopCount)
-    node.put("rlbasedHopCount", plainLearningResult.output)
+    node.put("reference", refHopCount)
+    node.put("rlbasedHopCount", crfLikeLearningResult.output)
+    node.put("oldRlBased", plainLearningResult.output)
     node.put(s"passed_time", passedTime())
     node.put("src", source)
     node.put("action", plainLearningResult.action)
-    node.put("trajectory", trajectory)
-    node.put(s"err_classicHopCount", Math.abs(refHopCount - classicHopCount))
-    node.put(s"err_rlbasedHopCount", Math.abs(refHopCount - crfLikeLearningResult.output))
-    node.put(s"err_crf", Math.abs(refHopCount - crf.toInt))
-    node.put(s"err_bis", Math.abs(refHopCount - bis.toInt))
-    node.put(s"err_oldRl", Math.abs(refHopCount - plainLearningResult.output))
+    node.put("oldTrajectory", trajectory)
+    node.put("crfTrajectory", crfLikeTrajectory)
     node.put("overestimate", overEstimate)
     node.put("underestimate", underEstimate)
+    node.put(s"err_classicHopCount", outputEvaluation(refHopCount, classicHopCount))
+    node.put(s"err_rlbasedHopCount", outputEvaluation(refHopCount, crfLikeLearningResult.output))
+    node.put(s"err_oldRl", outputEvaluation(refHopCount, plainLearningResult.output))
+    node.put(s"err_crf", outputEvaluation(refHopCount, crf.toInt))
+    node.put(s"err_bis", outputEvaluation(refHopCount, bis.toInt)) // put bis
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -94,6 +104,19 @@ class SwapSourceOnline extends SwapSourceLike {
         println(s"Agents learn? ${learnCondition.toString}")
         println(s"Episodes: ${episode.toString}")
         println(s"Epsilon: ${epsilon.value(episode).toString}")
+        val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
+        val data = {
+          nodes.map { node =>
+            (
+              node.get[Trajectory[PlainRLDefinition.State, PlainRLDefinition.Action]]("oldTrajectory"),
+              node.get[java.lang.Double]("reference"),
+              node.get[java.lang.Double]("oldRlBased")
+            )
+          }
+        }
+        //data.filter(_ => learnCondition).foreach { case (trj, ref, out) =>
+        //  globalSignal(trj, GlobalQ.standardQ, learningAlgorithm, ref, out)
+        //}
       },
       id = mid()
     )
@@ -135,9 +158,7 @@ class SwapSourceOnline extends SwapSourceLike {
       val data = excludingSelf.reifyField(nbr(output))
       val left = data.find(data => data._1 < mid() && !action.ignoreLeft).map(_._2)
       val right = data.find(data => data._1 > mid() && !action.ignoreRight).map(_._2)
-      val minValue =
-        List(left, right).collect { case Some(data) => data }.minOption.getOrElse(Double.PositiveInfinity)
-      minValue + 1
+      List(left, right).collect { case Some(data) => data }.minOption.map(_ + 1).getOrElse(output)
     }
   }
 
@@ -145,4 +166,28 @@ class SwapSourceOnline extends SwapSourceLike {
     if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
     else { -1 }
 
+  protected def localSignal(currentValue: Double): Double =
+    if (isStable(currentValue, windowDifferenceSize)) { 0 }
+    else { -1 }
+
+  @SuppressWarnings(Array("org.wartremover.warts.TraversableOps")) // because of unsafe scala binding
+  protected def globalSignal[S, A](
+      trajectory: Trajectory[S, A],
+      q: Q[S, A],
+      learning: QLearning.Type[S, A],
+      lastCorrectValue: Double,
+      lastOutput: Double
+  ): Q[_, _] = {
+    val (lastState, _, _) = trajectory.head
+    val (lastMinusOne, action, _) = trajectory.tail.head
+    val reward = if (lastCorrectValue.toInt != lastOutput.toInt) { globalReward }
+    else { 0 }
+    learning.improve((lastMinusOne, action, reward, lastState), q)
+  }
+
+  protected def outputEvaluation(ref: Double, value: Double): Double = {
+    val result = (ref - value).abs
+    if (result.isInfinite) { alchemistEnvironment.getNodes.size() }
+    else { result }
+  }
 }
