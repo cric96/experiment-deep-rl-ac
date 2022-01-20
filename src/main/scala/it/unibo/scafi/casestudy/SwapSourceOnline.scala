@@ -62,6 +62,7 @@ class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
     /// MISCELLANEOUS
     node.put(s"passed_time", passedTime())
     node.put("src", source)
+    /// RL DATA
     storeAllDataFrom(refHopCount, progression)
   }
 
