@@ -2,48 +2,36 @@ package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
-import it.unibo.alchemist.model.interfaces.Neighborhood
-import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ID, Metric}
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
 import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.learning.{Policy, Q, QLearning}
-import it.unibo.scafi.casestudy.CrfLikeDefinition.State
-import it.unibo.scafi.casestudy.LearningProcess.Trajectory
+import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
+import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalRL}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceOnline extends SwapSourceLike {
+class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
   // Constants
-  val maxValue = 5
+  val maxCrfValue = 5
   val maxDiff = 100
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => 1
   val hopRadius = 1
-  val globalReward = -100
+  val crfRisingSpeed = 40.0 / 12.0
+  val globalReward = -100 // not used currently
   /// Learning definition
   // Plain RL
-  lazy val learningAlgorithm: QLearning.Hysteretic[PlainRLDefinition.State, PlainRLDefinition.Action] =
-    QLearning.Hysteretic(actions, alpha.value(episode), beta.value(episode), gamma)
   lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
   lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
+  lazy val temporalRL = new TemporalRLAlgorithm(parameters, actions, maxDiff, windowDifferenceSize, trajectorySize)
   // CRF Like RL
-  lazy val crfLikeLearning: QLearning.Hysteretic[CrfLikeDefinition.State, CrfLikeDefinition.Action] =
-    QLearning.Hysteretic(
-      CrfLikeDefinition.actionSpace(List(2, 4, 6)),
-      alpha.value(episode),
-      beta.value(episode),
-      gamma
-    )
+  lazy val crfLikeRL = new CrfLikeAlgorithm(parameters, maxCrfValue)
   // World Like view
-  lazy val worldView: QLearning.Plain[GlobalView.State, GlobalView.Action] = QLearning.Plain(
-    CrfLikeDefinition.actionSpace(List(2, 4)),
-    alpha.value(episode),
-    gamma
-  )
+  lazy val worldViewRL = new GlobalViewAlgorithm(parameters, actions)
   // Alchemist molecules
-  lazy val actions: NonEmptySet[PlainRLDefinition.Action] = node.get("actions")
+  lazy val actions: NonEmptySet[TemporalRL.Action] = node.get("actions")
   lazy val radius: Double = node.get("range")
   lazy val shouldLearn: Boolean = learnCondition && !source
-
+  lazy val algorithms: List[AlgorithmTemplate[_, _]] = List(temporalRL, crfLikeRL)
   // Aggregate program
   override def aggregateProgram(): Unit = {
     ///// BASELINE
@@ -54,60 +42,27 @@ class SwapSourceOnline extends SwapSourceLike {
     val refHopCount = if (passedTime() >= rightSrcStop) hopCountWithoutRightSource else classicHopCount
     val eps = if (learnCondition) { epsilon.value(episode) }
     else { 0.0 }
-    ///// LEARNING PROBLEMS DEFINITION
-    val worldViewProblem = learningProcess(GlobalQ.worldQ)
-      .stateDefinition((_, _) => globalState)
-      .rewardDefinition(out => rewardSignal(refHopCount, out))
-      .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
-      .initialConditionDefinition(List.empty, Double.PositiveInfinity)
-    // Crf like learning definition
-    val crfProblem = learningProcess(GlobalQ.crfLikeQ)
-      .stateDefinition((data, _) => crfLikeState(data, maxValue))
-      //.rewardDefinition(out => localSignal(out))
-      .rewardDefinition(out => rewardSignal(refHopCount, out))
-      .actionEffectDefinition((output, _, action) => crfActionEffectLike(output, action))
-      .initialConditionDefinition(CrfLikeDefinition.State(None, None), Double.PositiveInfinity)
-    // Old learning definition
-    val learningProblem = learningProcess(GlobalQ.standardQ)
-      .stateDefinition((data, _) => plainStateFromWindow(data))
-      //.rewardDefinition(output => localSignal(output))
-      .rewardDefinition(out => rewardSignal(refHopCount, out))
-      .actionEffectDefinition((output, _, action) => minHoodPlus(nbr(output)) + action + 1)
-      .initialConditionDefinition(List.empty, Double.PositiveInfinity)
+    node.put("reference", refHopCount) // because it will be used by the other algorithms
     // RL Progression
-    val (plainLearningResult, trajectory) = learningProblem.step(learningAlgorithm, eps, shouldLearn)
-    val (crfLikeLearningResult, crfLikeTrajectory) = crfProblem.step(crfLikeLearning, eps, shouldLearn)
-    //val (worldLearningResult, worldTrajectory) = worldViewProblem.step(worldView, eps, shouldLearn)
+    @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
+    val progression = processAlgorithms(shouldLearn, eps)
     //// STATE OF THE ART
-    val crf = crfGradient(40 / 12.0)(source = source, hopCountMetric)
+    val crf = crfGradient(crfRisingSpeed)(source = source, hopCountMetric)
     val bis = bisGradient(hopRadius)(source, hopCountMetric)
-    //// ERROR ESTIMATION COUNT
-    val rlBasedError = refHopCount - plainLearningResult.output
-    val overEstimate =
-      if (rlBasedError > 0) { 1 }
-      else { 0 }
-    val underEstimate =
-      if (rlBasedError < 0) { 1 }
-      else { 0 }
     //// DATA STORAGE
-    node.put("qtable", plainLearningResult.q)
-    node.put("classicHopCount", classicHopCount)
-    node.put("reference", refHopCount)
-    node.put("globalView", 0.0)
-    node.put("rlbasedHopCount", crfLikeLearningResult.output)
-    node.put("oldRlBased", plainLearningResult.output)
-    node.put(s"passed_time", passedTime())
-    node.put("src", source)
-    node.put("action", plainLearningResult.action)
-    node.put("oldTrajectory", trajectory)
-    node.put("crfTrajectory", crfLikeTrajectory)
-    node.put("overestimate", overEstimate)
-    node.put("underestimate", underEstimate)
-    node.put(s"err_classicHopCount", outputEvaluation(refHopCount, classicHopCount))
-    node.put(s"err_rlbasedHopCount", outputEvaluation(refHopCount, crfLikeLearningResult.output))
-    node.put(s"err_oldRl", outputEvaluation(refHopCount, plainLearningResult.output))
+    /// OUTPUT
+    node.put("output_classicHopCount", classicHopCount)
+    node.put("output_reference", refHopCount)
+    node.put("output_crf", crf)
+    node.put("output_bis", bis)
+    /// ERROR
+    node.put("err_classicHopCount", outputEvaluation(refHopCount, classicHopCount))
     node.put(s"err_crf", outputEvaluation(refHopCount.toInt, crf.toInt))
     node.put(s"err_bis", outputEvaluation(refHopCount.toInt, bis.toInt))
+    /// MISCELLANEOUS
+    node.put(s"passed_time", passedTime())
+    node.put("src", source)
+    storeAllDataFrom(refHopCount, progression)
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -119,25 +74,7 @@ class SwapSourceOnline extends SwapSourceLike {
         println(s"Episodes: ${episode.toString}")
         println(s"Epsilon: ${epsilon.value(episode).toString}")
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
-        val data = {
-          nodes.map { node =>
-            (
-              node.get[Trajectory[PlainRLDefinition.State, PlainRLDefinition.Action]]("oldTrajectory"),
-              node.get[java.lang.Double]("reference"),
-              node.get[java.lang.Double]("oldRlBased")
-            )
-          }
-        }
-
-        val policy = Policy.greedy[CrfLikeDefinition.State, CrfLikeDefinition.Action](crfLikeLearning.actions)
-        val stateSpace = for {
-          l <- (-maxValue to maxValue)
-          r <- (-maxValue to maxValue)
-        } yield CrfLikeDefinition.State(Some(l), Some(r))
-        stateSpace.foreach(s => println(s, policy(s, GlobalQ.crfLikeQ)))
-        //data.filter(_ => learnCondition).foreach { case (trj, ref, out) =>
-        //  globalSignal(trj, GlobalQ.standardQ, learningAlgorithm, ref, out)
-        //}
+        algorithms.foreach(_.episodeEnd(nodes))
       },
       id = mid()
     )
@@ -145,94 +82,33 @@ class SwapSourceOnline extends SwapSourceLike {
     storeMonitor
   }
 
-  protected def plainStateFromWindow(output: Double): PlainRLDefinition.State = {
-    val minOutput = minHood(nbr(output))
-    val recent = recentValues(windowDifferenceSize, minOutput)
-    val oldState = recent.headOption.getOrElse(minOutput)
-    val diff = (minOutput - oldState) match {
-      case diff if Math.abs(diff) > maxDiff => maxDiff * diff.sign
-      case diff                             => diff
-    }
-    recentValues(trajectorySize, diff).toList.map(_.toInt)
-  }
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
+  def processAlgorithms(
+      learn: Boolean,
+      eps: Double
+  ): Map[AlgorithmTemplate[_, _], (RoundData[_, _, Double], Trajectory[_, _])] =
+    algorithms.map(l => l -> l.output(learn, eps)).toMap
 
-  protected def crfLikeState(output: Double, maxValue: Double): CrfLikeDefinition.State = {
-    val other = excludingSelf.reifyField(nbr(output))
-    val differences = other.map { case (k, v) => k -> (output - v) }
-    def align(option: Option[(ID, Double)]): Option[Int] = option
-      .map(_._2)
-      .map(diff =>
-        if (diff.abs > maxValue) { maxValue * diff.sign }
-        else { diff }
-      )
-      .map(_.toInt)
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
+  def storeAllDataFrom(
+      reference: Double,
+      elements: Map[AlgorithmTemplate[_, _], (RoundData[_, _, Double], Trajectory[_, _])]
+  ): Unit =
+    elements.foreach { case (algorithm, (data, trajectory)) => store(algorithm, reference, data, trajectory) }
 
-    val left = align(differences.find(_._1 < mid()))
-    val right = align(differences.find(_._1 > mid()))
-    CrfLikeDefinition.State(left, right)
-  }
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  protected def crfWithAction(output: Double, action: CrfLikeDefinition.Action): CrfLikeDefinition.StateWithAction = {
-    val other = excludingSelf.reifyField((nbr(output), nbr(action)))
-    def align(option: Option[(ID, (Double, _))]): Option[Int] = option
-      .map(_._2._1)
-      .map(_ - output)
-      .map(diff =>
-        if (diff.abs > maxValue) { maxValue * diff.sign }
-        else { diff }
-      )
-      .map(_.toInt)
-    val left = other.find(_._1 < mid())
-    val right = other.find(_._1 > mid())
-    val leftOutput = align(left)
-    val rightOutput = align(right)
-    val leftAction = left.map(_._2._2).map(_.upVelocity)
-    val rightAction = right.map(_._2._2).map(_.upVelocity)
-    List[Any](leftOutput, leftAction, rightOutput, rightAction)
-  }
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  protected def globalState: List[Int] = {
-    val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
-    val prevOutput = nodes.collect {
-      case node if node.has("globalView") => node.get[Int]("globalView")
-      case _                              => Double.PositiveInfinity.toInt
-    }
-    prevOutput
-  }
-
-  protected def crfActionEffectLike(output: Double, action: CrfLikeDefinition.Action): Double = {
-    if (action.ignoreLeft && action.ignoreRight) {
-      output + action.upVelocity
-    } else {
-      val data = excludingSelf.reifyField(nbr(output))
-      val left = data.find(data => data._1 < mid() && !action.ignoreLeft).map(_._2)
-      val right = data.find(data => data._1 > mid() && !action.ignoreRight).map(_._2)
-      List(left, right).collect { case Some(data) => data }.minOption.map(_ + 1).getOrElse(output)
-    }
-  }
-
-  protected def rewardSignal(groundTruth: Double, currentValue: Double): Double =
-    if ((groundTruth.toInt - currentValue.toInt) == 0) { 0 }
-    else { -1 }
-
-  protected def localSignal(currentValue: Double): Double =
-    if (isStable(currentValue, windowDifferenceSize)) { 0 }
-    else { -1 }
-
-  @SuppressWarnings(Array("org.wartremover.warts.TraversableOps")) // because of unsafe scala binding
-  protected def globalSignal[S, A](
-      trajectory: Trajectory[S, A],
-      q: Q[S, A],
-      learning: QLearning.Type[S, A],
-      lastCorrectValue: Double,
-      lastOutput: Double
-  ): Q[_, _] = {
-    val (lastState, _, _) = trajectory.head
-    val (lastMinusOne, action, _) = trajectory.tail.head
-    val reward = if (lastCorrectValue.toInt != lastOutput.toInt) { globalReward }
-    else { 0 }
-    learning.improve((lastMinusOne, action, reward, lastState), q)
+  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
+  def store(
+      algorithm: AlgorithmTemplate[_, _],
+      reference: Double,
+      data: RoundData[_, _, Double],
+      trj: Trajectory[_, _]
+  ): Unit = {
+    node.put(s"q_${algorithm.name}", algorithm.learningProblem.q)
+    node.put(s"output_${algorithm.name}", data.output)
+    node.put(s"err_${algorithm.name}", outputEvaluation(reference, data.output))
+    node.put(s"action_${algorithm.name}", data.action)
+    node.put(s"trajectory_${algorithm.name}", trj)
+    node.put(s"reward_${algorithm.name}", trj.headOption.getOrElse(0.0))
   }
 
   protected def outputEvaluation(ref: Double, value: Double): Double = {
@@ -240,5 +116,4 @@ class SwapSourceOnline extends SwapSourceLike {
     if (result.isInfinite) { alchemistEnvironment.getNodes.size() }
     else { result }
   }
-
 }

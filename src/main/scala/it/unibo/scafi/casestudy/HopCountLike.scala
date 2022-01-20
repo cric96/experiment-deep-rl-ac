@@ -3,6 +3,7 @@ package it.unibo.scafi.casestudy
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.learning.{Episode, TimeVariable}
+import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 
 import scala.util.Random
 
@@ -29,6 +30,7 @@ trait HopCountLike
   lazy val beta: TimeVariable[Double] = node.get("beta")
   lazy val epsilon: TimeVariable[Double] = node.get("epsilon")
   lazy val gamma: Double = node.get[java.lang.Double]("gamma")
+  lazy val parameters = AlgorithmHyperparameter(alpha.value(episode), beta.value(episode), gamma)
   // Store data
   def endHandler: EndHandler[_]
 
