@@ -6,12 +6,12 @@ import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
-import it.unibo.scafi.casestudy.algorithm.CrfLikeRL._
+import it.unibo.scafi.casestudy.algorithm.CrfHopCountLikeRL._
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 
 import scala.collection.immutable.SortedSet
 import scala.util.Random
-class CrfLikeRL extends RLLike {
+class CrfHopCountLikeRL extends RLLike {
   self: AggregateProgram
     with TemporalStateManagement
     with GradientLikeLearning
@@ -36,7 +36,7 @@ class CrfLikeRL extends RLLike {
 
     override protected def learning: QLearning.Type[State, Action] =
       QLearning.Hysteretic(
-        CrfLikeRL.actionSpace(velocities),
+        CrfHopCountLikeRL.actionSpace(velocities),
         parameters.alpha,
         parameters.beta,
         parameters.gamma
@@ -78,7 +78,7 @@ class CrfLikeRL extends RLLike {
 
     override protected def learning: QLearning.Type[StateWithAction, Action] =
       QLearning.Hysteretic(
-        CrfLikeRL.actionSpace(velocities),
+        CrfHopCountLikeRL.actionSpace(velocities),
         parameters.alpha,
         parameters.beta,
         parameters.gamma
@@ -112,7 +112,7 @@ class CrfLikeRL extends RLLike {
   }
 }
 
-object CrfLikeRL {
+object CrfHopCountLikeRL {
   case class State(left: Option[Int], right: Option[Int])
   case class StateWithAction(left: Option[Int], leftAction: Option[Int], right: Option[Int], rightAction: Option[Int])
   @SuppressWarnings(Array("org.wartremover.warts.DefaultArguments")) // because of unsafe scala binding

@@ -5,11 +5,11 @@ import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
-import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalRL}
+import it.unibo.scafi.casestudy.algorithm.{HopCountLearningAlgorithms, TemporalRL}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceHopCountOnline extends LearningAlgorithms with SwapSourceLike {
+class SwapSourceHopCountOnline extends HopCountLearningAlgorithms with SwapSourceLike {
   // Constants
   val maxCrfValue = 5
   val maxDiff = 100
