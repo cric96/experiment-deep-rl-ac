@@ -9,7 +9,7 @@ import it.unibo.scafi.casestudy.algorithm.{HopCountLearningAlgorithms, TemporalR
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceHopCountOnline extends HopCountLearningAlgorithms with SwapSourceLike {
+class SwapSourceHopCount extends HopCountLearningAlgorithms with SwapSourceLike {
   // Constants
   val maxCrfValue = 5
   val maxDiff = 100
