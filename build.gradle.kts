@@ -30,6 +30,8 @@ dependencies {
     implementation("it.unibo.alchemist:alchemist-swingui:_")
     // Scala par
     implementation("org.scala-lang.modules:scala-parallel-collections_${scala}:_")
+    // Scala py
+    implementation("me.shadaj:scalapy-core_${scala}:0.5.1")
     // ScaFi dependency
     implementation("org.scala-lang:scala-library:$scalaLib")
     implementation("it.unibo.scafi:scafi-core_${scala}:_")
@@ -113,7 +115,10 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
         runAllGraphic.dependsOn(graphic)
         val batch by basetask("run${capitalizedName}Batch") {
             description = "Launches batch experiments for $capitalizedName"
-            jvmArgs("-XX:+AggressiveHeap")
+            jvmArgs(
+                "-XX:+AggressiveHeap",
+                "-Dscalapy.python.programname=/home/gianluca/.pyenv/shims/python"
+            )
             maxHeapSize = "${minOf(heap.toInt(), Runtime.getRuntime().availableProcessors() * taskSize)}m"
             File("data").mkdirs()
             args(

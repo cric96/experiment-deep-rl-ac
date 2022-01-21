@@ -33,7 +33,7 @@ trait RLLike {
       .rewardDefinition(rewardSignal)
       .actionEffectDefinition(actionEffect)
       .initialConditionDefinition(initialState, initialOutput)
-    final def output(shouldLearn: Boolean, epsilon: Double): Output =
+    def output(shouldLearn: Boolean, epsilon: Double): Output =
       learningProblem.step(learning, epsilon, shouldLearn)
     def episodeEnd(nodes: Iterable[NodeManager]): Unit = {}
     def peekReference: Double = node.get("reference")

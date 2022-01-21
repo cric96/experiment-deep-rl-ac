@@ -5,7 +5,7 @@ import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
-import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalRL}
+import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalDeepRL, TemporalRL}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
@@ -25,13 +25,16 @@ class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
   lazy val temporalRL = new TemporalRLAlgorithm(parameters, actions, maxDiff, windowDifferenceSize, trajectorySize)
   // CRF Like RL
   lazy val crfLikeRL = new CrfLikeAlgorithm(parameters, maxCrfValue)
+  lazy val crfLikeWithActionRL = new CrfLikeWithActionAlgorithm(parameters, maxCrfValue)
   // World Like view
   lazy val worldViewRL = new GlobalViewAlgorithm(parameters, actions)
+  // Deep RL
+  //lazy val deepRL = new DeepRLAlgorithm(100)
   // Alchemist molecules
   lazy val actions: NonEmptySet[TemporalRL.Action] = node.get("actions")
   lazy val radius: Double = node.get("range")
   lazy val shouldLearn: Boolean = learnCondition && !source
-  lazy val algorithms: List[AlgorithmTemplate[_, _]] = List(temporalRL, crfLikeRL)
+  lazy val algorithms: List[AlgorithmTemplate[_, _]] = List(temporalRL, crfLikeRL, crfLikeWithActionRL /*, deepRL*/ )
   // Aggregate program
   override def aggregateProgram(): Unit = {
     ///// BASELINE
@@ -64,6 +67,7 @@ class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
     node.put("src", source)
     /// RL DATA
     storeAllDataFrom(refHopCount, progression)
+    //val foo = TemporalDeepRL.pass(List(1, 2))
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
@@ -114,7 +118,7 @@ class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
 
   protected def outputEvaluation(ref: Double, value: Double): Double = {
     val result = (ref - value).abs
-    if (result.isInfinite) { alchemistEnvironment.getNodes.size() }
+    if (result.isInfinite || result > 200) { alchemistEnvironment.getNodes.size() }
     else { result }
   }
 }
