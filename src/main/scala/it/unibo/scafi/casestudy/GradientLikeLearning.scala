@@ -46,7 +46,7 @@ trait GradientLikeLearning {
           List.empty
         )
       rep(stateEvolution) { ev =>
-        val nextOutput = hopCount(ev.state, ev.action, ctx)
+        val nextOutput = gradient(ev.state, ev.action, ctx)
         val stateTPlus = ctx.statePolicy(nextOutput, ev.action)
         val reward = ctx.rewardSignal(nextOutput)
         // Agent update
@@ -73,7 +73,7 @@ trait GradientLikeLearning {
       }.view(learning.ops)
     }
 
-    private def hopCount(state: S, action: A, ctx: LearningContext[S, A, Double]): Double = {
+    private def gradient(state: S, action: A, ctx: LearningContext[S, A, Double]): Double = {
       rep(ctx.initialCondition.output) { hopCount =>
         mux(source)(0.0)(ctx.actionEffect(hopCount, state, action))
       }
