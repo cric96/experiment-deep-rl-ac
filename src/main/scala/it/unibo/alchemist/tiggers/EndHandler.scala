@@ -3,6 +3,15 @@ package it.unibo.alchemist.tiggers
 import it.unibo.alchemist.boundary.interfaces.OutputMonitor
 import it.unibo.alchemist.model.interfaces._
 
+/** A output monitor attached to an alchemist simulator used to perform action at the end of the simulation.
+  * @param sharedLogic
+  *   the logic performed by all the nodes
+  * @param leaderLogic
+  *   the logic performed by only the leader (the node with id == 0)
+  * @param id
+  *   the node id.
+  * @tparam T
+  */
 class EndHandler[T](sharedLogic: () => Unit, leaderLogic: () => Unit, id: Int) extends OutputMonitor[T, Position[_]] {
   override def finished(environment: Environment[T, Position[_]], time: Time, step: Long): Unit = {
     if (id == 0) { leaderLogic() }

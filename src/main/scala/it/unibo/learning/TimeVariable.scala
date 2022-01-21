@@ -2,6 +2,9 @@ package it.unibo.learning
 
 import scala.language.implicitConversions
 
+/** A variable that change during the episode
+  * @tparam A
+  */
 sealed trait TimeVariable[A] {
   def value(clock: Episode): A
 }

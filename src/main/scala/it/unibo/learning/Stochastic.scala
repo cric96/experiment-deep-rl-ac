@@ -3,6 +3,7 @@ package it.unibo.learning
 import cats.data.NonEmptyList
 import scala.util.Random
 
+/** Utility for managing stochastic */
 object Stochastic {
   def flip[A](left: => A, right: => A)(implicit rnd: Random): A = flipUnbalanced(0.5)(left, right)
 

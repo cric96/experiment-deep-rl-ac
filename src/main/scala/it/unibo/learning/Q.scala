@@ -1,6 +1,10 @@
 package it.unibo.learning
 import upickle.default.{macroRW, ReadWriter => RW}
 
+/** a Q value function. For each S,A pair returns the current value
+  * @tparam S
+  * @tparam A
+  */
 sealed trait Q[S, A] extends ((S, A) => Double) {
   def update(state: S, action: A, reward: Double): Q[S, A]
   def withDefault(value: => Double): Q[S, A]
@@ -10,7 +14,7 @@ object Q {
   def zeros[S, A](): Q[S, A] = fillWith(0)
   def fillWith[S, A](value: => Double): Q[S, A] = MutableQ(Map.empty.withDefault(_ => value))
 
-  @SuppressWarnings(Array("org.wartremover.warts.All")) // because fast check
+  @SuppressWarnings(Array("org.wartremover.warts.Var")) // because of mutable global state
   case class MutableQ[S, A](var initialConfig: Map[(S, A), Double]) extends Q[S, A] {
     override def apply(state: S, action: A): Double = initialConfig((state, action))
     override def update(state: S, action: A, reward: Double): Q[S, A] = {

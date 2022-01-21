@@ -4,6 +4,7 @@ import cats.data.NonEmptyList
 import scala.util.Random
 
 object TypeEnrichment {
+  /* Some utilities used NonEmptyList */
   implicit class RichNonEmptyList[A](nonEmpty: NonEmptyList[A]) {
     def maxBy[B: Numeric](select: A => B): A = nonEmpty.reduceLeft[A] { case (acc, data) =>
       if (Numeric[B].gteq(select(acc), select(data))) { acc }

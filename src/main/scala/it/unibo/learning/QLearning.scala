@@ -5,6 +5,7 @@ import it.unibo.cats.TypeEnrichment.RichNonEmptyList
 import it.unibo.learning.ReinforcementLearning.Ops
 import scala.util.Random
 
+/** A module that contains all Q-Learning like definitions (Plain, Hysteretic, ...) */
 object QLearning {
   private[QLearning] def max[S, A](q: Q[S, A], actions: NonEmptySet[A], stateTPlus: S)(implicit
       random: Random

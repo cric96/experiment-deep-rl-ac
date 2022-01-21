@@ -5,10 +5,14 @@ import cats.data.{NonEmptyList, NonEmptySet}
 import it.unibo.cats.TypeEnrichment._
 import scala.util.Random
 
+/** A RL policy. Given a state, it gives in output the action that the agent should perform */
 object Policy {
+  // general type: C is the context used by the policy to choose want action the agent will perform
   type Type[S, C, A] = (S, C) => A
+  // the context is the q table. Typical policy. It cannot be used in deep learning algorithm for instance.
   type QBased[S, A] = Type[S, Q[S, A], A]
 
+  // explorative policy.
   def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _) => {
     def randomFromList(actions: NonEmptyList[A]): A = actions match {
       case NonEmptyList(head, Nil)              => head
@@ -17,6 +21,7 @@ object Policy {
     randomFromList(Reducible[NonEmptySet].toNonEmptyList(actions))
   }
 
+  // the policy will choose always the action with the highest q value
   def greedy[S, A](actions: NonEmptySet[A]): QBased[S, A] = (state, q) => {
     val (action, _) = actions.toNonEmptyList
       .map(action => (action, q(state, action)))
@@ -24,6 +29,7 @@ object Policy {
     action
   }
 
+  // eps probability to used an explorative policy, (1-eps) to use a greedy policy
   def epsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit rnd: Random): QBased[S, A] =
     (state, q) => {
       val epsilon = epsilonT
@@ -33,6 +39,7 @@ object Policy {
       policy(state, q)
     }
 
+  // each action has at least e / N probability to be chosen
   def softEpsilonGreedy[S, A](actions: NonEmptySet[A], epsilonT: Double)(implicit
       rnd: Random
   ): QBased[S, A] = {
