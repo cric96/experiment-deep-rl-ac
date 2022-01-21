@@ -1,14 +1,14 @@
-package it.unibo.scafi.casestudy.algorithm
+package it.unibo.scafi.casestudy.algorithm.hopcount
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
-import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.ScafiAlchemistSupport
-import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
-import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ScafiAlchemistSupport, _}
 import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
-import it.unibo.scafi.casestudy.algorithm.GlobalViewRL._
+import it.unibo.scafi.casestudy.algorithm.RLLike
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
+import it.unibo.scafi.casestudy.algorithm.hopcount.GlobalViewRL.{Action, State}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Random

@@ -9,6 +9,7 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 trait SwapSourceLike extends GradientLike {
   self: RLLike =>
+  protected val maxBound = 200
   // Variable loaded by alchemist configuration.
   lazy val leftSrc: Int = node.get[Integer]("left_source") // ID of the source at the left of the env (the stable one)
   lazy val rightSrc: Int =
@@ -69,7 +70,7 @@ trait SwapSourceLike extends GradientLike {
 
   protected def outputEvaluation(ref: Double, value: Double): Double = {
     val result = (ref - value).abs
-    if (result.isInfinite || result > 200) { alchemistEnvironment.getNodes.size() }
+    if (result.isInfinite || result > maxBound) { alchemistEnvironment.getNodes.size() }
     else { result }
   }
 }

@@ -1,16 +1,17 @@
-package it.unibo.scafi.casestudy.algorithm
+package it.unibo.scafi.casestudy.algorithm.hopcount
+
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.NodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
-import it.unibo.scafi.casestudy.algorithm.TemporalDeepRL.dqn
+import it.unibo.scafi.casestudy.algorithm.RLLike
+import it.unibo.scafi.casestudy.algorithm.hopcount.TemporalDeepRL._
 import it.unibo.scafi.casestudy.{GradientLikeLearning, LearningProcess, SwapSourceLike}
 import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.{PyQuote, SeqConverters}
 import monocle.syntax.all._
-import TemporalDeepRL._
 
 import scala.util.Random
 trait TemporalDeepRL extends RLLike {

@@ -1,13 +1,8 @@
 package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
-import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
-import it.unibo.alchemist.tiggers.EndHandler
-import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
-import it.unibo.scafi.casestudy.algorithm.{HopCountLearningAlgorithms, TemporalRL}
-
-import scala.jdk.CollectionConverters.IteratorHasAsScala
+import it.unibo.scafi.casestudy.algorithm.hopcount.{HopCountLearningAlgorithms, TemporalRL}
 
 class SwapSourceHopCount extends HopCountLearningAlgorithms with SwapSourceLike {
   // Constants

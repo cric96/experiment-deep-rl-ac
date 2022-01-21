@@ -3,8 +3,8 @@ package it.unibo.scafi.casestudy.algorithm
 import it.unibo.alchemist.model.implementations.nodes.NodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.{Q, QLearning}
-import it.unibo.scafi.casestudy.{GradientLikeLearning, LearningProcess}
 import it.unibo.scafi.casestudy.LearningProcess.{LearningContext, RoundData, Trajectory}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, LearningProcess}
 
 import scala.util.Random
 
