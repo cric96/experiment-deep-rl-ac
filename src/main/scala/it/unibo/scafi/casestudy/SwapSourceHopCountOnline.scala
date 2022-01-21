@@ -5,11 +5,11 @@ import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
-import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalDeepRL, TemporalRL}
+import it.unibo.scafi.casestudy.algorithm.{LearningAlgorithms, TemporalRL}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
+class SwapSourceHopCountOnline extends LearningAlgorithms with SwapSourceLike {
   // Constants
   val maxCrfValue = 5
   val maxDiff = 100
@@ -29,7 +29,7 @@ class SwapSourceOnline extends LearningAlgorithms with SwapSourceLike {
   // World Like view
   lazy val worldViewRL = new GlobalViewAlgorithm(parameters, actions)
   // Deep RL
-  //lazy val deepRL = new DeepRLAlgorithm(100)
+  // lazy val deepRL = new DeepRLAlgorithm(100)
   // Alchemist molecules
   lazy val actions: NonEmptySet[TemporalRL.Action] = node.get("actions")
   lazy val radius: Double = node.get("range")

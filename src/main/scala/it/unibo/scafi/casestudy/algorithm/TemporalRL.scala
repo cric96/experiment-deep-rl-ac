@@ -5,11 +5,11 @@ import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import it.unibo.scafi.casestudy.algorithm.TemporalRL._
-import it.unibo.scafi.casestudy.{HopCountLearning, TemporalStateManagement}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 
 import scala.util.Random
 trait TemporalRL extends RLLike {
-  self: AggregateProgram with TemporalStateManagement with HopCountLearning with ScafiAlchemistSupport =>
+  self: AggregateProgram with TemporalStateManagement with GradientLikeLearning with ScafiAlchemistSupport =>
   class TemporalRLAlgorithm(
       parameter: AlgorithmHyperparameter,
       actionSet: NonEmptySet[Action],

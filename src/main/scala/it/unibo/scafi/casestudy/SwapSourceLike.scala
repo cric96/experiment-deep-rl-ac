@@ -1,6 +1,6 @@
 package it.unibo.scafi.casestudy
 
-trait SwapSourceLike extends HopCountLike {
+trait SwapSourceLike extends GradientLike {
   // Variable loaded by alchemist configuration.
   lazy val leftSrc: Int = node.get[Integer]("left_source") // ID of the source at the left of the env (the stable one)
   lazy val rightSrc: Int =

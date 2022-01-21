@@ -3,7 +3,7 @@ package it.unibo.scafi.casestudy.algorithm
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.ScafiAlchemistSupport
-import it.unibo.scafi.casestudy.{HopCountLearning, TemporalStateManagement}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
@@ -13,7 +13,7 @@ import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Random
 trait GlobalViewRL extends RLLike {
-  self: AggregateProgram with TemporalStateManagement with HopCountLearning with ScafiAlchemistSupport =>
+  self: AggregateProgram with TemporalStateManagement with GradientLikeLearning with ScafiAlchemistSupport =>
 
   class GlobalViewAlgorithm(parameters: AlgorithmHyperparameter, actions: NonEmptySet[Action])(implicit
       val rand: Random

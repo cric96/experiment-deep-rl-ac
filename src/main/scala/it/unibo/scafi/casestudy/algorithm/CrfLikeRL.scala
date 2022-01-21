@@ -2,7 +2,7 @@ package it.unibo.scafi.casestudy.algorithm
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.ScafiAlchemistSupport
-import it.unibo.scafi.casestudy.{HopCountLearning, TemporalStateManagement}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
@@ -14,7 +14,7 @@ import scala.util.Random
 class CrfLikeRL extends RLLike {
   self: AggregateProgram
     with TemporalStateManagement
-    with HopCountLearning
+    with GradientLikeLearning
     with ScafiAlchemistSupport
     with FieldUtils =>
 

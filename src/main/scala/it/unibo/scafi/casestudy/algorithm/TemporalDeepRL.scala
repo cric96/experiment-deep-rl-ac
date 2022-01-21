@@ -6,7 +6,7 @@ import it.unibo.learning.Q.MutableQ
 import it.unibo.learning.{Q, QLearning}
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
 import it.unibo.scafi.casestudy.algorithm.TemporalDeepRL.dqn
-import it.unibo.scafi.casestudy.{HopCountLearning, LearningProcess, SwapSourceLike}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, LearningProcess, SwapSourceLike}
 import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.{PyQuote, SeqConverters}
 import monocle.syntax.all._
@@ -14,7 +14,7 @@ import TemporalDeepRL._
 
 import scala.util.Random
 trait TemporalDeepRL extends RLLike {
-  self: AggregateProgram with ScafiAlchemistSupport with HopCountLearning with FieldUtils with SwapSourceLike =>
+  self: AggregateProgram with ScafiAlchemistSupport with GradientLikeLearning with FieldUtils with SwapSourceLike =>
   val upperBound = 100
   class DeepRLAlgorithm(maxDiff: Int)(implicit rand: Random) extends AlgorithmTemplate[List[Int], Int] {
     val localTrajectory: Trajectory[List[Int], Int] = Seq.empty
@@ -90,7 +90,7 @@ trait TemporalDeepRL extends RLLike {
       val terminations = List.tabulate(dropped.size)(_ => List.fill(79)(0) ::: 1 :: Nil).flatten.toPythonProxy
       val dataset =
         d3rlpy.dataset.MDPDataset(np.array(states), np.array(actions), np.array(rewards), np.array(terminations))
-      val fitted = dqn.fit(dataset, n_epochs = 100)
+      val fitted = dqn.fit(dataset, n_epochs = 50)
     }
   }
 }

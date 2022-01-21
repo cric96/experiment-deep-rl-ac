@@ -8,9 +8,9 @@ import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import scala.util.Random
 
 /** Common variable/constants/behaviour that have hop count learning problem */
-trait HopCountLike
+trait GradientLike
     extends AggregateProgram
-    with HopCountLearning
+    with GradientLikeLearning
     with StandardSensors
     with ScafiAlchemistSupport
     with BlockT

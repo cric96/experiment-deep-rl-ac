@@ -3,13 +3,13 @@ package it.unibo.scafi.casestudy.algorithm
 import it.unibo.alchemist.model.implementations.nodes.NodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import it.unibo.learning.{Q, QLearning}
-import it.unibo.scafi.casestudy.{HopCountLearning, LearningProcess}
+import it.unibo.scafi.casestudy.{GradientLikeLearning, LearningProcess}
 import it.unibo.scafi.casestudy.LearningProcess.{LearningContext, RoundData, Trajectory}
 
 import scala.util.Random
 
 trait RLLike {
-  self: AggregateProgram with ScafiAlchemistSupport with HopCountLearning =>
+  self: AggregateProgram with ScafiAlchemistSupport with GradientLikeLearning =>
   /* UTILITIES */
   @SuppressWarnings(Array("org.wartremover.warts.TraversableOps")) // because of unsafe scala binding
   protected def globalSignal[S, A](

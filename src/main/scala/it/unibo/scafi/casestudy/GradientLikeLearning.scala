@@ -8,7 +8,7 @@ import monocle.syntax.all._
 import scala.language.reflectiveCalls
 import scala.util.Random
 
-trait HopCountLearning {
+trait GradientLikeLearning {
   self: AggregateProgram =>
   // TEMPLATE METHOD
   def source: Boolean
