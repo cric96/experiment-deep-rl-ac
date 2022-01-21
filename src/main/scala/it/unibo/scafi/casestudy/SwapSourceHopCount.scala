@@ -67,58 +67,5 @@ class SwapSourceHopCount extends HopCountLearningAlgorithms with SwapSourceLike 
     node.put("src", source)
     /// RL DATA
     storeAllDataFrom(refHopCount, progression)
-    //val foo = TemporalDeepRL.pass(List(1, 2))
-  }
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of unsafe scala binding
-  override lazy val endHandler: EndHandler[_] = {
-    val storeMonitor = new EndHandler[Any](
-      sharedLogic = () => {},
-      leaderLogic = () => {
-        println(s"Agents learn? ${learnCondition.toString}")
-        println(s"Episodes: ${episode.toString}")
-        println(s"Epsilon: ${epsilon.value(episode).toString}")
-        val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
-        algorithms.foreach(_.episodeEnd(nodes))
-      },
-      id = mid()
-    )
-    alchemistEnvironment.getSimulation.addOutputMonitor(storeMonitor)
-    storeMonitor
-  }
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
-  def processAlgorithms(
-      learn: Boolean,
-      eps: Double
-  ): Map[AlgorithmTemplate[_, _], (RoundData[_, _, Double], Trajectory[_, _])] =
-    algorithms.map(l => l -> l.output(learn, eps)).toMap
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
-  def storeAllDataFrom(
-      reference: Double,
-      elements: Map[AlgorithmTemplate[_, _], (RoundData[_, _, Double], Trajectory[_, _])]
-  ): Unit =
-    elements.foreach { case (algorithm, (data, trajectory)) => store(algorithm, reference, data, trajectory) }
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
-  def store(
-      algorithm: AlgorithmTemplate[_, _],
-      reference: Double,
-      data: RoundData[_, _, Double],
-      trj: Trajectory[_, _]
-  ): Unit = {
-    node.put(s"q_${algorithm.name}", algorithm.learningProblem.q)
-    node.put(s"output_${algorithm.name}", data.output)
-    node.put(s"err_${algorithm.name}", outputEvaluation(reference, data.output))
-    node.put(s"action_${algorithm.name}", data.action)
-    node.put(s"trajectory_${algorithm.name}", trj)
-    node.put(s"reward_${algorithm.name}", trj.headOption.getOrElse(0.0))
-  }
-
-  protected def outputEvaluation(ref: Double, value: Double): Double = {
-    val result = (ref - value).abs
-    if (result.isInfinite || result > 200) { alchemistEnvironment.getNodes.size() }
-    else { result }
   }
 }
