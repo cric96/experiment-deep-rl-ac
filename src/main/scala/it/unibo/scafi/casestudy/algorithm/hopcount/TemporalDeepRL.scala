@@ -14,6 +14,11 @@ import me.shadaj.scalapy.py.{PyQuote, SeqConverters}
 import monocle.syntax.all._
 
 import scala.util.Random
+
+/** A test of a deep reinforcement learning library in aggregate computing learning problem. In particular, I had chosen
+  * d3rlpy: https://github.com/takuseno/d3rlpy Scalapy helps to used that library from JVM. Currently seems that some
+  * memory leak problem persist.
+  */
 trait TemporalDeepRL extends RLLike {
   self: AggregateProgram with ScafiAlchemistSupport with GradientLikeLearning with FieldUtils with SwapSourceLike =>
   val upperBound = 100
@@ -97,8 +102,8 @@ trait TemporalDeepRL extends RLLike {
 }
 
 object TemporalDeepRL {
-  lazy val d3rlpy = py.module("d3rlpy")
-  val dqn = d3rlpy.algos.DQN()
-  lazy val np = py.module("numpy")
-  val creation = dqn.create_impl(observation_shape = py"(2, )", action_size = 5)
+  lazy val d3rlpy: py.Dynamic = py.module("d3rlpy")
+  val dqn: py.Dynamic = d3rlpy.algos.DQN()
+  lazy val np: py.Dynamic = py.module("numpy")
+  val creation: py.Any = dqn.create_impl(observation_shape = py"(2, )", action_size = 5)
 }

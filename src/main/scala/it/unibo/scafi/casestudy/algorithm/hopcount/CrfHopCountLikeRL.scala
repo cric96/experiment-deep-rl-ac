@@ -11,6 +11,20 @@ import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 
 import scala.collection.immutable.SortedSet
 import scala.util.Random
+
+/** A RL approach inspired by the CRF algorithm. It is created considering a simple network where the nodes are
+  * displaced following a line:
+  *
+  * 0 --- 1 --- 2 --- 3
+  *
+  * So, each node can have only two neighbours at most (and at least one neighbour).
+  *
+  * The state is codify as: State(outputDiffLeft, outputDiffRight).
+  *
+  * The actions are codified as: Action(ignoreLeft, ignoreRight, upVelocity).
+  *
+  * In particular, when ignoreLeft and ignoreRight are true, the node increase its output as: output + upVelocity
+  */
 class CrfHopCountLikeRL extends RLLike {
   self: AggregateProgram
     with TemporalStateManagement

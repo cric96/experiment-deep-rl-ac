@@ -1,30 +1,17 @@
-package it.unibo.scafi.casestudy.algorithm.hopcount
+package it.unibo.scafi.casestudy.algorithm.gradient
 
 import cats.data.NonEmptySet
-import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
-import it.unibo.learning.Q.MutableQ
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.ScafiAlchemistSupport
 import it.unibo.learning.{Q, QLearning}
 import it.unibo.scafi.casestudy.algorithm.RLLike
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
+import it.unibo.scafi.casestudy.algorithm.hopcount.TemporalRL
 import it.unibo.scafi.casestudy.algorithm.hopcount.TemporalRL.{Action, State}
 import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
+import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
 import scala.util.Random
 
-/** Hop Count RL used in the alpaca submission. The state is encoded as the history of the difference with local node
-  * output and the minimum node output. For instance:
-  *
-  * 0 --- 1 --- 2 --- 3
-  *
-  * 1 --- 2 --- 3 --- 4
-  *
-  * 2 --- 3 --- 4 --- 5
-  *
-  * The state in the node 0 (leftmost) is: -1, -1, -1
-  *
-  * The action it is simply a delta correction (i.e. how much the local node should increase according the neighbourhood
-  * output)
-  */
-trait TemporalRL extends RLLike {
+trait TemporalGradientRL extends RLLike {
   self: AggregateProgram with TemporalStateManagement with GradientLikeLearning with ScafiAlchemistSupport =>
   class TemporalRLAlgorithm(
       parameter: AlgorithmHyperparameter,
@@ -35,6 +22,7 @@ trait TemporalRL extends RLLike {
   )(implicit rand: Random)
       extends AlgorithmTemplate[State, Action] {
     override val name: String = "temporalRL"
+
     override protected def learning: QLearning.Type[State, Action] =
       QLearning.Hysteretic[State, Action](actionSet, parameter.alpha, parameter.beta, parameter.gamma)
 
@@ -58,8 +46,11 @@ trait TemporalRL extends RLLike {
   }
 }
 
-object TemporalRL {
-  type State = List[Int]
-  type Action = Int
-  val q = MutableQ[State, Action](Map.empty).withDefault(0.0)
+object TemporalGradientRL {
+  trait State
+  case object Greater extends State
+  case object Smaller extends State
+  case object GreaterTwoTimes extends State
+  case object SmallerTwoTime extends State
+  type Action = Double // velocity
 }

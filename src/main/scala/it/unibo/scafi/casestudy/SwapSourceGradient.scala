@@ -9,7 +9,6 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   val maxDiff = 100
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => nbrRange()
-  val hopRadius = 1
   val crfRisingSpeed = 40.0 / 12.0
   val globalReward = -100 // not used currently
   /// Learning definition
@@ -33,7 +32,7 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
     val progression = processAlgorithms(shouldLearn, eps)
     //// STATE OF THE ART
     val crf = crfGradient(crfRisingSpeed)(source = source, hopCountMetric)
-    val bis = bisGradient(hopRadius)(source, hopCountMetric)
+    val bis = bisGradient(radius)(source, hopCountMetric)
     //// DATA STORAGE
     /// OUTPUT
     node.put("output_classicHopCount", classic)
@@ -42,8 +41,8 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
     node.put("output_bis", bis)
     /// ERROR
     node.put("err_classicHopCount", outputEvaluation(referenceGradient, classic))
-    node.put(s"err_crf", outputEvaluation(referenceGradient.toInt, crf.toInt))
-    node.put(s"err_bis", outputEvaluation(referenceGradient.toInt, bis.toInt))
+    node.put(s"err_crf", outputEvaluation(referenceGradient, crf))
+    node.put(s"err_bis", outputEvaluation(referenceGradient, bis))
     /// MISCELLANEOUS
     node.put(s"passed_time", passedTime())
     node.put("src", source)

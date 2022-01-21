@@ -12,6 +12,14 @@ import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Random
+
+/** A very unrealistic scenario used only as a check (can the RL eventually improve). In this case, the state consists
+  * in as an ordered list of the each node output:
+  *
+  * 0 --- 1 --- 2 --- 3
+  *
+  * So the state will be: (0, 1, 2, 3).
+  */
 trait GlobalViewRL extends RLLike {
   self: AggregateProgram with TemporalStateManagement with GradientLikeLearning with ScafiAlchemistSupport =>
 
