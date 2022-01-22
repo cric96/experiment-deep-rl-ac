@@ -11,7 +11,7 @@ class SwapSourceHopCount extends HopCountLearningAlgorithms with SwapSourceLike 
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => 1
   val hopRadius = 1
-  val crfRisingSpeed = 40.0 / 12.0
+  val crfRisingSpeed = 40 / 12.0
   val globalReward = -100 // not used currently
   /// Learning definition
   // Plain RL
@@ -55,8 +55,8 @@ class SwapSourceHopCount extends HopCountLearningAlgorithms with SwapSourceLike 
     node.put("output_bis", bis)
     /// ERROR
     node.put("err_classicHopCount", outputEvaluation(refHopCount, classicHopCount))
-    node.put(s"err_crf", outputEvaluation(refHopCount.toInt, crf.toInt))
-    node.put(s"err_bis", outputEvaluation(refHopCount.toInt, bis.toInt))
+    node.put(s"err_crf", outputEvaluation(refHopCount, crf))
+    node.put(s"err_bis", outputEvaluation(refHopCount, bis))
     /// MISCELLANEOUS
     node.put(s"passed_time", passedTime())
     node.put("src", source)

@@ -9,7 +9,7 @@ import scala.language.implicitConversions
   Array("org.wartremover.warts.DefaultArguments", "org.wartremover.warts.TraversableOps")
 ) // because of should be in scafi lib
 trait FixedGradients extends GenericUtils with StateManagement {
-  self: FieldCalculusSyntax with StandardSensors with BlockG =>
+  self: FieldCalculusSyntax with StandardSensors with BlockG with ScafiAlchemistSupport =>
   import Builtins._
 
   val DEFAULT_CRF_RAISING_SPEED: Double = 5.0
@@ -91,7 +91,7 @@ trait FixedGradients extends GenericUtils with StateManagement {
     }
   }
 
-  def crfGradient(raisingSpeed: Double = DEFAULT_CRF_RAISING_SPEED, lagMetric: => Double = nbrLag().toMillis.toDouble)(
+  def crfGradient(raisingSpeed: Double = DEFAULT_CRF_RAISING_SPEED, lagMetric: => Double = alchemistDeltaTime(0.0))(
       source: Boolean,
       metric: Metric = nbrRange
   ): Double =
@@ -99,16 +99,12 @@ trait FixedGradients extends GenericUtils with StateManagement {
       mux(source)((0.0, 0.0)) {
         implicit def durationToDouble(fd: FiniteDuration): Double = fd.toMillis.toDouble / 1000.0
         final case class Constraint(nbr: ID, gradient: Double, nbrDistance: Double)
-
         val constraints = foldhoodPlus[List[Constraint]](List.empty)(_ ++ _) {
           val (nbrg, d) = (nbr(g), metric())
-          if (mid() == 0)
-            println(speed * (deltaTime().toMicros))
-          mux(nbrg + d + speed * deltaTime() / 1000.0 <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
+          mux(nbrg + d + speed * lagMetric <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
         }
-
         if (constraints.isEmpty) {
-          (g + raisingSpeed * deltaTime(), raisingSpeed)
+          (g + raisingSpeed * lagMetric, raisingSpeed)
         } else {
           (constraints.map(c => c.gradient + c.nbrDistance).min, 0.0)
         }

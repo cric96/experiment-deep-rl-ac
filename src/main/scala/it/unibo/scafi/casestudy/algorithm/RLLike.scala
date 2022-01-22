@@ -73,7 +73,7 @@ trait RLLike {
     protected def state(output: Double, action: A): S
     protected def actionEffect(oldOutput: Double, state: S, action: A): Double
     protected def rewardSignal(output: Double): Double = {
-      if ((peekReference.toInt - output.toInt) == 0) {
+      if ((peekReference.toInt - output.toInt) == 0 || (output.isInfinite && peekReference.isInfinite)) {
         0
       } else { -1 }
     }

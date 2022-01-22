@@ -26,11 +26,11 @@ variables:
 
 ## Time variables
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.1, 9)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.2, 4)
 _beta: &beta >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.01, 9)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.02, 4)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.1, 5)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.9, 1)
 
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)

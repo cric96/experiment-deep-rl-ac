@@ -69,8 +69,11 @@ trait SwapSourceLike extends GradientLike {
   }
 
   protected def outputEvaluation(ref: Double, value: Double): Double = {
+
     val result = (ref - value).abs
-    if (result.isInfinite || result > maxBound) { alchemistEnvironment.getNodes.size() }
+    if (ref.isInfinite && value.isInfinite) {
+      0.0
+    } else if (result > maxBound) { alchemistEnvironment.getNodes.size() }
     else { result }
   }
 }

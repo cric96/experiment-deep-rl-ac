@@ -88,7 +88,7 @@ def process_file(filepath):
   
 def process_file_content(filehandle):
   # Read data
-  lines = filehandle.readlines()
+  lines = filehandle.readlines()[drop_first_lines:]
   # Removes empty and comment lines and maps to float
   data_rows = np.array([list(map(float, s.strip().split(" "))) for s in lines if len(s)>0 and s[0]!="#"], dtype='float')
   return data_rows
@@ -182,6 +182,7 @@ the_plots_formats = []
 the_plots_colors = []
 line_widths = []
 title_prefix = ""
+drop_first_lines = 8
 
 ###################################################################################
 ############################## Script preparation #################################

@@ -62,7 +62,8 @@ trait TemporalGradientRL extends RLLike {
         val result = minHoodPlus(nbr(oldOutput) + nbrRange())
         action match {
           case TemporalGradientRL.ConsiderNeighbourhood => result
-          case TemporalGradientRL.Ignore(upVelocity) => oldOutput + upVelocity * deltaTime().toMillis.toDouble / 1000.0
+          case TemporalGradientRL.Ignore(upVelocity) =>
+            oldOutput + upVelocity * alchemistDeltaTime(0) //deltaTime().toMillis.toDouble / 1000.0
         }
       }
 

@@ -14,7 +14,7 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   val maxDiff = 100
   val maxUpdateVelocity = 2
   val hopCountMetric: Metric = () => nbrRange()
-  val crfRisingSpeed = 40.0 / 12.0
+  val crfRisingSpeed = 20
   val globalReward = -100 // not used currently
   /// Learning definition
   // Temporal RL
@@ -22,7 +22,7 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
   lazy val temporalRLGradient = new TemporalRLAlgorithm(
     parameters,
-    NonEmptySet.fromSetUnsafe(SortedSet(ConsiderNeighbourhood, Ignore(10), Ignore(crfRisingSpeed))),
+    NonEmptySet.fromSetUnsafe(SortedSet(ConsiderNeighbourhood, Ignore(crfRisingSpeed))),
     radius,
     maxDiff,
     windowDifferenceSize,

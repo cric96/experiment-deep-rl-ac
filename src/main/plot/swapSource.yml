@@ -20,7 +20,7 @@ the_plots_formats:
   - [0, 9, 10, 11, 12, 13, 14]
 line_widths:
   - [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
-default_colors: &default_colors ["black", "black", "bisque","rosybrown","linen",
+default_colors: &default_colors ["black", "black", "red","darkgreen","gold",
                                  "orchid", "teal", "darkviolet",
                                  "darkorchid", "navy", "cyan", "brown", "yellow", "gray", "magenta"]
 the_plots_colors:

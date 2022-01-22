@@ -116,7 +116,7 @@ deployments:
         concentration: 0
 export:
   - type: CSVExporter
-    parameters: [ "gradientExperiments", 1.0, "./data" ]
+    parameters: [ "hopCountExperiment", 1.0, "./data" ]
     data:
     - time
     - molecule: output_reference
