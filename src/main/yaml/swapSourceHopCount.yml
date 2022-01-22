@@ -115,63 +115,66 @@ deployments:
       - molecule: err_bis
         concentration: 0
 export:
-  - time
-  - molecule: output_reference
-    aggregators: [mean]
-    value-filter: onlyfinite
+  - type: CSVExporter
+    parameters: [ "gradientExperiments", 1.0, "./data" ]
+    data:
+    - time
+    - molecule: output_reference
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_classicHopCount
-    aggregators: [mean]
-    value-filter: onlyfinite
+    - molecule: output_classicHopCount
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_bis
-    aggregators: [ mean ]
-    value-filter: onlyfinite
+    - molecule: output_bis
+      aggregators: [ mean ]
+      value-filter: onlyfinite
 
-  - molecule: output_crf
-    aggregators: [mean]
-    value-filter: onlyfinite
+    - molecule: output_crf
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_temporalRL
-    aggregators: [mean]
-    value-filter: onlyfinite
+    - molecule: output_temporalRL
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_crfLikeRL
-    aggregators: [mean]
-    value-filter: onlyfinite
+    - molecule: output_crfLikeRL
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_crfLikeWithActionRL
-    aggregators: [mean]
-    value-filter: onlyfinite
+    - molecule: output_crfLikeWithActionRL
+      aggregators: [mean]
+      value-filter: onlyfinite
 
-  - molecule: output_deepRL
-    aggregators: [ mean ]
-    value-filter: onlyfinite
+    - molecule: output_deepRL
+      aggregators: [ mean ]
+      value-filter: onlyfinite
 
-  - molecule: err_classicHopCount
-    aggregators: [sum]
-    value-filter: onlyfinite
+    - molecule: err_classicHopCount
+      aggregators: [sum]
+      value-filter: onlyfinite
 
-  - molecule: err_temporalRL
-    aggregators: [sum]
-    value-filter: onlyfinite
+    - molecule: err_temporalRL
+      aggregators: [sum]
+      value-filter: onlyfinite
 
-  - molecule: err_crfLikeRL
-    aggregators: [sum]
-    value-filter: onlyfinite
+    - molecule: err_crfLikeRL
+      aggregators: [sum]
+      value-filter: onlyfinite
 
-  - molecule: err_crfLikeWithActionRL
-    aggregators: [sum]
-    value-filter: onlyfinite
+    - molecule: err_crfLikeWithActionRL
+      aggregators: [sum]
+      value-filter: onlyfinite
 
-  - molecule: err_deepRL
-    aggregators: [sum]
-    value-filter: onlyfinite
+    - molecule: err_deepRL
+      aggregators: [sum]
+      value-filter: onlyfinite
 
-  - molecule: err_crf
-    value-filter: onlyfinite
-    aggregators: [sum]
+    - molecule: err_crf
+      value-filter: onlyfinite
+      aggregators: [sum]
 
-  - molecule: err_bis
-    value-filter: onlyfinite
-    aggregators: [sum]
+    - molecule: err_bis
+      value-filter: onlyfinite
+      aggregators: [sum]

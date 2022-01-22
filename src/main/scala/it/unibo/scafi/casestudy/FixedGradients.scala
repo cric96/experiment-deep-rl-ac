@@ -102,7 +102,9 @@ trait FixedGradients extends GenericUtils with StateManagement {
 
         val constraints = foldhoodPlus[List[Constraint]](List.empty)(_ ++ _) {
           val (nbrg, d) = (nbr(g), metric())
-          mux(nbrg + d + speed * lagMetric / 1000.0 <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
+          if (mid() == 0)
+            println(speed * (deltaTime().toMicros))
+          mux(nbrg + d + speed * deltaTime() / 1000.0 <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
         }
 
         if (constraints.isEmpty) {

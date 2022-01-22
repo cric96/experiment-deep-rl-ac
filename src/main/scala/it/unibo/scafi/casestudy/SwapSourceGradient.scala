@@ -1,9 +1,14 @@
 package it.unibo.scafi.casestudy
 
+import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
+import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL
+import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL.{ConsiderNeighbourhood, Ignore}
 import it.unibo.scafi.casestudy.algorithm.hopcount.HopCountLearningAlgorithms
 
-class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike {
+import scala.collection.immutable.SortedSet
+
+class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike with TemporalGradientRL {
   // Constants
   val maxCrfValue = 5
   val maxDiff = 100
@@ -12,10 +17,21 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   val crfRisingSpeed = 40.0 / 12.0
   val globalReward = -100 // not used currently
   /// Learning definition
+  // Temporal RL
+  lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
+  lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
+  lazy val temporalRLGradient = new TemporalRLAlgorithm(
+    parameters,
+    NonEmptySet.fromSetUnsafe(SortedSet(ConsiderNeighbourhood, Ignore(10), Ignore(crfRisingSpeed))),
+    radius,
+    maxDiff,
+    windowDifferenceSize,
+    trajectorySize
+  )
   // Alchemist molecules
   lazy val radius: Double = node.get("range")
   lazy val shouldLearn: Boolean = learnCondition && !source
-  lazy val algorithms: List[AlgorithmTemplate[_, _]] = List()
+  lazy val algorithms: List[AlgorithmTemplate[_, _]] = List(temporalRLGradient)
   // Aggregate program
   override def aggregateProgram(): Unit = {
     ///// BASELINE
