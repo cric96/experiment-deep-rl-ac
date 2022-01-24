@@ -29,11 +29,20 @@ trait TemporalGradientRL extends RLLike {
       parameter: AlgorithmHyperparameter,
       actionSet: NonEmptySet[Action],
       radius: Double,
-      maxDiff: Int,
+      maxBound: Int,
+      bucketsCount: Int,
       windowDifferenceSize: Int,
       trajectorySize: Int
   )(implicit rand: Random)
       extends AlgorithmTemplate[History, Action] {
+
+    private val max = maxBound * bucketsCount
+    private val steps = maxBound * 2
+    private val iterableSteps = -max to max by steps
+    private val buckets =
+      iterableSteps.reverse.drop(1).reverse.zip(iterableSteps.drop(1)).map { case (min, max) =>
+        Slot(min / bucketsCount.toDouble, max / bucketsCount.toDouble)
+      }
     override val name: String = "temporalRL"
     override protected def learning: QLearning.Type[History, Action] =
       QLearning.Hysteretic[History, Action](actionSet, parameter.alpha, parameter.beta, parameter.gamma)
@@ -41,16 +50,17 @@ trait TemporalGradientRL extends RLLike {
     override protected def state(output: Double, action: Action): History = {
       def evalState(out: Double): GradientDifference = {
         val diff = output - out
-        if (diff ~= 0) {
+        if ((diff ~= 0)) {
           Same
-        } else if (diff > 0 && diff < 2 * radius) {
-          Greater
-        } else if (diff > 0 && diff > 2 * radius) {
-          GreaterTwoTimes
-        } else if (diff < 0 && diff > -(2 * radius)) {
-          Smaller
+        } else if (diff > maxBound * radius) {
+          GreaterBound
+        } else if (diff < maxBound * -radius) {
+          SmallerBound
         } else {
-          SmallerTwoTime
+          @SuppressWarnings(Array("org.wartremover.warts.All")) // because serialization with case object
+          val slot =
+            buckets.find { case Slot(min, max) => diff > min * radius && diff < max * radius }.getOrElse(Same)
+          slot
         }
       }
       val minOutput = evalState(minHood(nbr(output)))
@@ -65,7 +75,7 @@ trait TemporalGradientRL extends RLLike {
         action match {
           case TemporalGradientRL.ConsiderNeighbourhood => result
           case TemporalGradientRL.Ignore(upVelocity) =>
-            oldOutput + upVelocity * deltaTime().toMillis.toDouble / 1000.0
+            oldOutput + upVelocity * (deltaTime().toMillis.toDouble / 1000.0)
         }
       }
 
@@ -78,12 +88,12 @@ trait TemporalGradientRL extends RLLike {
       val policy = Policy.greedy[History, Action](actionSet)
       val states = TemporalGradientRL.q.initialConfig.keys.map(_._1)
       println(s"STATE VISITED: ${states.size.toString}")
-      states
+      /*states
         .map(state => state -> policy(state, q))
         .filterNot { case (state, action) =>
           action == ConsiderNeighbourhood
         }
-        .foreach { case (state, action) => println(s"STATE: ${state.toString} ===> ACTION ${action.toString}") }
+        .foreach { case (state, action) => println(s"STATE: ${state.toString} ===> ACTION ${action.toString}") }*/
       val storage = new LocalStorage[String]("gradientQ")
       storage.save("q", q)
     }
@@ -98,14 +108,12 @@ trait TemporalGradientRL extends RLLike {
 
 object TemporalGradientRL {
   sealed trait GradientDifference
+  case object GreaterBound extends GradientDifference
+  case object SmallerBound extends GradientDifference
   case object Same extends GradientDifference
-  case class Slot(startMultiplier: Double, endMultiplier: Double)
-  case object Greater extends GradientDifference
-  case object Smaller extends GradientDifference
-  case object GreaterTwoTimes extends GradientDifference
-  case object SmallerTwoTime extends GradientDifference
+  case class Slot(startMultiplier: Double, endMultiplier: Double) extends GradientDifference
 
-  case class State(maxDifference: GradientDifference, minDifference: GradientDifference)
+  case class State(minDifference: GradientDifference, maxDifference: GradientDifference)
   case class History(states: Seq[State])
 
   sealed trait Action
@@ -126,6 +134,8 @@ object TemporalGradientRL {
   // for the storage
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit def storageForGradientDifference: RW[GradientDifference] = macroRW[GradientDifference]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForSlot: RW[Slot] = macroRW[Slot]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
   implicit def storageForAction: RW[Action] = macroRW[Action]
   @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
