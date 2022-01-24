@@ -9,6 +9,8 @@ import it.unibo.scafi.casestudy.algorithm.RLLike
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL._
 import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
+import it.unibo.storage.LocalStorage
+import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.util.Random
 
@@ -33,7 +35,6 @@ trait TemporalGradientRL extends RLLike {
   )(implicit rand: Random)
       extends AlgorithmTemplate[History, Action] {
     override val name: String = "temporalRL"
-
     override protected def learning: QLearning.Type[History, Action] =
       QLearning.Hysteretic[History, Action](actionSet, parameter.alpha, parameter.beta, parameter.gamma)
 
@@ -77,7 +78,14 @@ trait TemporalGradientRL extends RLLike {
       val policy = Policy.greedy[History, Action](actionSet)
       val states = TemporalGradientRL.q.initialConfig.keys.map(_._1)
       println(s"STATE VISITED: ${states.size.toString}")
-      //states.foreach(s => println(s"STATE: ${s.toString} ===> ACTION ${policy(s, q).toString}"))
+      states
+        .map(state => state -> policy(state, q))
+        .filterNot { case (state, action) =>
+          action == ConsiderNeighbourhood
+        }
+        .foreach { case (state, action) => println(s"STATE: ${state.toString} ===> ACTION ${action.toString}") }
+      val storage = new LocalStorage[String]("gradientQ")
+      storage.save("q", q)
     }
 
     override protected def rewardSignal(output: Double): Double = {
@@ -89,8 +97,9 @@ trait TemporalGradientRL extends RLLike {
 }
 
 object TemporalGradientRL {
-  trait GradientDifference
+  sealed trait GradientDifference
   case object Same extends GradientDifference
+  case class Slot(startMultiplier: Double, endMultiplier: Double)
   case object Greater extends GradientDifference
   case object Smaller extends GradientDifference
   case object GreaterTwoTimes extends GradientDifference
@@ -99,7 +108,7 @@ object TemporalGradientRL {
   case class State(maxDifference: GradientDifference, minDifference: GradientDifference)
   case class History(states: Seq[State])
 
-  trait Action
+  sealed trait Action
   implicit def ordering: Ordering[Action] = (x: Action, y: Action) =>
     (x, y) match {
       case (ConsiderNeighbourhood, Ignore(_))             => 1
@@ -109,6 +118,21 @@ object TemporalGradientRL {
     }
   case class Ignore(upVelocity: Double) extends Action
   case object ConsiderNeighbourhood extends Action
-
+  val storage = new LocalStorage[String]("gradientQ")
   val q: MutableQ[History, Action] = new MutableQ[History, Action](Map.empty.withDefault(_ => 0.0))
+  //new MutableQ(
+  //  storage.load[MutableQ[History, Action]]("q").initialConfig.withDefault(_ => 0.0)
+  //) //
+  // for the storage
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForGradientDifference: RW[GradientDifference] = macroRW[GradientDifference]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForAction: RW[Action] = macroRW[Action]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForIgnore: RW[Ignore] = macroRW[Ignore]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForState: RW[State] = macroRW[State]
+  @SuppressWarnings(Array("org.wartremover.warts.All")) // because of macro expansion
+  implicit def storageForHistory: RW[History] = macroRW[History]
+
 }
