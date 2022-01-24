@@ -63,7 +63,7 @@ trait TemporalGradientRL extends RLLike {
         action match {
           case TemporalGradientRL.ConsiderNeighbourhood => result
           case TemporalGradientRL.Ignore(upVelocity) =>
-            oldOutput + upVelocity * alchemistDeltaTime(0) //deltaTime().toMillis.toDouble / 1000.0
+            oldOutput + upVelocity * deltaTime().toMillis.toDouble / 1000.0
         }
       }
 

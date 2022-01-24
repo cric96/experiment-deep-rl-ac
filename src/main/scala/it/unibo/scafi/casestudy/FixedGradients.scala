@@ -91,7 +91,10 @@ trait FixedGradients extends GenericUtils with StateManagement {
     }
   }
 
-  def crfGradient(raisingSpeed: Double = DEFAULT_CRF_RAISING_SPEED, lagMetric: => Double = alchemistDeltaTime(0.0))(
+  def crfGradient(
+      raisingSpeed: Double = DEFAULT_CRF_RAISING_SPEED,
+      lagMetric: => Double = deltaTime().toMillis.toDouble / 1000.0
+  )(
       source: Boolean,
       metric: Metric = nbrRange
   ): Double =
@@ -101,10 +104,10 @@ trait FixedGradients extends GenericUtils with StateManagement {
         final case class Constraint(nbr: ID, gradient: Double, nbrDistance: Double)
         val constraints = foldhoodPlus[List[Constraint]](List.empty)(_ ++ _) {
           val (nbrg, d) = (nbr(g), metric())
-          mux(nbrg + d + speed * lagMetric <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
+          mux(nbrg + d + speed * deltaTime() <= g)(List(Constraint(nbr(mid()), nbrg, d)))(List())
         }
         if (constraints.isEmpty) {
-          (g + raisingSpeed * lagMetric, raisingSpeed)
+          (g + raisingSpeed * deltaTime(), raisingSpeed)
         } else {
           (constraints.map(c => c.gradient + c.nbrDistance).min, 0.0)
         }
