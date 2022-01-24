@@ -30,7 +30,10 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
   val orderedExperiments =  os.list(os.pwd / "data")
     .filter(os.isFile)
     .filter(_.toString().contains(experimentName))
-    .sortBy(_.wrapped.toString.split("-").last.toDouble)
+    .sortBy(file => {
+      val numberWithExtension = file.wrapped.toString.split("-").last
+      numberWithExtension.split("\\.").head
+    })
   
   val experiments = orderedExperiments
     .map(file => file.wrapped.toAbsolutePath.toString)
@@ -39,15 +42,17 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
     .map(_.all())
     .map(file => file.filter(row => row.forall(!_.contains("#"))))
     .drop(skip)
-  
+
   val selectedIndicies = experiments
     .map(
       experiment => experiment.map(row => select(row, indices:_*)).map(row => row.map(_.toDouble))
-    ).map(
-      experiment => 
+    ).map(_.drop(1))
+    .map(
+      experiment => {
         experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
+      }
     )
-    
+
 
   val plotIndicies = experiments.indices.toList
   val plots = selectedIndicies

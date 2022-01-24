@@ -3,7 +3,7 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   last_greedy_episodes: { formula: 2.0 }
-  learning_episodes: { formula: 10.0 }
+  learning_episodes: { formula: 45.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
@@ -16,21 +16,21 @@ variables:
       val learn_ep = learning_episodes.asInstanceOf[java.lang.Double].intValue;
       learn_ep != 0 && (ep == 0 || ep % each != 0) && ep < learn_ep
   range: &range { formula: 8.0 }
-  gamma: &gamma { formula: 0.9 }
-  window_size: &window_size { formula: 3 }
+  gamma: &gamma { formula: 0.90 }
+  window_size: &window_size { formula: 2 } ## probably better with windows_size = 3
   trajectory_size: &trajectory_size { formula: 2 }
-  right_source: &right_source { formula: 'episode % 2 == 0 ? 0 : 0'}
-  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 19' }
+  right_source: &right_source { formula: 'episode % 2 == 0 ? 0 : 19'}
+  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 0' }
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
 
 ## Time variables
 _alpha: &alpha >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.2, 4)
+  it.unibo.learning.TimeVariable.independent(0.1)
 _beta: &beta >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.02, 4)
+  it.unibo.learning.TimeVariable.independent(0.01)
 _epsilon: &epsilon >
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.9, 1)
+  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.05, 40)
 
 _actions: &actions >
   cats.data.NonEmptySet.of(0, 1, 2)
@@ -75,8 +75,6 @@ deployments:
         concentration: *left_source
       - molecule: right_source
         concentration: *right_source
-      - molecule: source
-        concentration: false
       - molecule: episode_length
         concentration: *episode_length
       ###### EXPORT DATA

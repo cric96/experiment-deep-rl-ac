@@ -1,9 +1,10 @@
 package it.unibo.scafi.casestudy.algorithm.gradient
 
 import cats.data.NonEmptySet
+import it.unibo.alchemist.model.implementations.nodes.NodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ScafiAlchemistSupport, _}
 import it.unibo.learning.Q.MutableQ
-import it.unibo.learning.{Q, QLearning}
+import it.unibo.learning.{Policy, Q, QLearning}
 import it.unibo.scafi.casestudy.algorithm.RLLike
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL._
@@ -70,6 +71,15 @@ trait TemporalGradientRL extends RLLike {
     override protected def initialState: History = History(Seq.empty)
 
     override protected def q: Q[History, Action] = TemporalGradientRL.q
+
+    override def episodeEnd(nodes: Iterable[NodeManager]): Unit = {
+      println(":::::CHECK GREEDY POLICY:::::")
+      val policy = Policy.greedy[History, Action](actionSet)
+      val states = TemporalGradientRL.q.initialConfig.keys.map(_._1)
+      println(s"STATE VISITED: ${states.size.toString}")
+      //states.foreach(s => println(s"STATE: ${s.toString} ===> ACTION ${policy(s, q).toString}"))
+    }
+
   }
 }
 
@@ -80,6 +90,7 @@ object TemporalGradientRL {
   case object Smaller extends GradientDifference
   case object GreaterTwoTimes extends GradientDifference
   case object SmallerTwoTime extends GradientDifference
+
   case class State(maxDifference: GradientDifference, minDifference: GradientDifference)
   case class History(states: Seq[State])
 
@@ -94,5 +105,5 @@ object TemporalGradientRL {
   case class Ignore(upVelocity: Double) extends Action
   case object ConsiderNeighbourhood extends Action
 
-  val q = new MutableQ[History, Action](Map.empty).withDefault(0.0)
+  val q: MutableQ[History, Action] = new MutableQ[History, Action](Map.empty.withDefault(_ => 0.0))
 }

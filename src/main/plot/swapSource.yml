@@ -1,6 +1,6 @@
 the_plots_labels:
   - Time                 #0
-  - 'mean optimal HopCount'
+  - 'mean optimal Gradient'
   - 'mean classic'
   - 'mean bis'
   - 'mean crf'
@@ -19,7 +19,7 @@ the_plots_formats:
   - [0, 1, 2, 3, 4, 5, 6, 7, 8]
   - [0, 9, 10, 11, 12, 13, 14]
 line_widths:
-  - [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+  - [ 2, 4, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2 ]
 default_colors: &default_colors ["black", "black", "red","darkgreen","gold",
                                  "orchid", "teal", "darkviolet",
                                  "darkorchid", "navy", "cyan", "brown", "yellow", "gray", "magenta"]

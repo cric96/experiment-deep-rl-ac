@@ -20,9 +20,14 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   // Temporal RL
   lazy val windowDifferenceSize: Int = node.get[java.lang.Integer]("window")
   lazy val trajectorySize: Int = node.get[java.lang.Integer]("trajectory")
+  @SuppressWarnings(Array("wartremover:Serializable"))
+  val actions: List[TemporalGradientRL.Action] =
+    List[TemporalGradientRL.Action](ConsiderNeighbourhood) ::: List[TemporalGradientRL.Action](
+      Ignore(crfRisingSpeed)
+    )
   lazy val temporalRLGradient = new TemporalRLAlgorithm(
     parameters,
-    NonEmptySet.fromSetUnsafe(SortedSet(ConsiderNeighbourhood, Ignore(crfRisingSpeed))),
+    NonEmptySet.fromSetUnsafe(SortedSet(actions: _*)),
     radius,
     maxDiff,
     windowDifferenceSize,
