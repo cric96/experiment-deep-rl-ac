@@ -80,6 +80,11 @@ trait TemporalGradientRL extends RLLike {
       //states.foreach(s => println(s"STATE: ${s.toString} ===> ACTION ${policy(s, q).toString}"))
     }
 
+    override protected def rewardSignal(output: Double): Double = {
+      if (((peekReference - output) ~= 0) || (output.isInfinite && peekReference.isInfinite)) {
+        0
+      } else { -1 }
+    }
   }
 }
 
