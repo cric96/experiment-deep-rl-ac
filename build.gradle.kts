@@ -47,6 +47,9 @@ dependencies {
     testImplementation("org.scalatest:scalatest_${scala}:_")
     testImplementation("junit:junit:_")
     testImplementation("org.scalatestplus:junit-4-13_2.13:_")
+    // YAML
+    implementation("org.yaml:snakeyaml:_")
+
 }
 tasks.withType<ScalaCompile> {
     scalaCompileOptions.additionalParameters = mutableListOf("-Xfatal-warnings", "-feature")
