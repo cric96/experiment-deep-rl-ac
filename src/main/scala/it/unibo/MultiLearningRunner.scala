@@ -18,7 +18,7 @@ object MultiLearningRunner extends App {
     def list: jutil.List[Any] = as[jutil.List[Any]]
     def dict: jutil.Map[AnyRef, Any] = as[jutil.Map[AnyRef, Any]]
   }
-  val startingFile = "src/main/yaml/swapSourceGradient.yml"
+  val startingFile = "src/main/yaml/swapSourceGradientRectangle.yml"
   val yaml = new Yaml()
   val dir = os.temp.dir(prefix = "simulations")
   val alphaBetaCombination = List((0.5, 0.01), (0.1, 0.01), (0.3, 0.02))
