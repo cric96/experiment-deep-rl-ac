@@ -56,5 +56,5 @@ object MultiLearningRunner extends App {
   }
   trait P extends Position[P]
   val execution = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors))
-  allSimulations.foreach(a => execution.execute(() => HeadlessSimulationLauncher.INSTANCE.launch(a, Helper.create())))
+  allSimulations.foreach(a => HeadlessSimulationLauncher.INSTANCE.launch(a, Helper.create()))
 }
