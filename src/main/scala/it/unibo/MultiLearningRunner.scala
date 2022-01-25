@@ -55,6 +55,6 @@ object MultiLearningRunner extends App {
     LoadAlchemist.from(file.getInputStream, YamlProvider.INSTANCE)
   }
   trait P extends Position[P]
-  val execution = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(12))
+  val execution = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors))
   allSimulations.foreach(a => execution.execute(() => HeadlessSimulationLauncher.INSTANCE.launch(a, Helper.create())))
 }
