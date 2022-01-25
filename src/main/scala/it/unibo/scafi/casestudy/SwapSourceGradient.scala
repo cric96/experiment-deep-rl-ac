@@ -14,7 +14,7 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   val maxRadiusMultiplier = 2
   val buckets = 2
   val maxUpdateVelocity = 2
-  val hopCountMetric: Metric = () => nbrRange()
+  val gradientMetric: Metric = () => nbrRange()
   val crfRisingSpeed = 20
   val globalReward = -100 // not used currently
   /// Learning definition
@@ -54,8 +54,8 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
     @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of heterogeneous types
     val progression = processAlgorithms(shouldLearn, eps)
     //// STATE OF THE ART
-    val crf = crfGradient(crfRisingSpeed)(source = source, hopCountMetric)
-    val bis = bisGradient(radius)(source, hopCountMetric)
+    val crf = crfGradient(crfRisingSpeed)(source = source, gradientMetric)
+    val bis = bisGradient(radius)(source, gradientMetric)
     //// DATA STORAGE
     /// OUTPUT
     node.put("output_classicHopCount", classic)
