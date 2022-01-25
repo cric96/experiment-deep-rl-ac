@@ -13,7 +13,7 @@ plugins {
     id("org.scoverage") version "7.0.0"
     id("cz.augi.gradle.wartremover") version "0.14.2"
     idea
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "1.6.10"
 
 }
 repositories {
@@ -135,3 +135,7 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
         }
         runAllBatch.dependsOn(batch)
     }
+tasks.register<JavaExec>("startMultipleLearning") {
+    main = "it.unibo.MultiLearningRunner"
+    classpath = sourceSets["main"].runtimeClasspath
+}

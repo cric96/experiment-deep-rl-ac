@@ -3,7 +3,7 @@ incarnation: scafi
 variables:
   # SIMULATION VARIABLE
   last_greedy_episodes: { formula: 2.0 }
-  learning_episodes: { formula: 42.0 }
+  learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
@@ -21,8 +21,8 @@ variables:
   maxRadiusMultiplier: &maxRadiusMultiplier { formula: 2.0 }
   window_size: &window_size { formula: 2 } ## probably better with windows_size = 3
   trajectory_size: &trajectory_size { formula: 2 }
-  right_source: &right_source { formula: 'episode % 2 == 0 ? 0 : 19'}
-  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 0' }
+  right_source: &right_source { formula: 'episode % 2 == 0 ? 60 : 19'}
+  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 60' }
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
 
@@ -40,7 +40,7 @@ environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 5, 5, 5, 0.5, 0.5, 0.0, 0.0] #large
+    parameters: [0, 0, 100, 20, 5, 5, 0.5, 0.5, 0.0, 0.0] #large
     programs:
       - time-distribution: 1
         type: Event
