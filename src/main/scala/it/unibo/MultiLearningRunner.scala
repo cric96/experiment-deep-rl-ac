@@ -60,7 +60,7 @@ object MultiLearningRunner extends App {
     file
   }
   implicit val executionContext =
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors))
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors / 2))
 
   val futures = allSimulations.map(file =>
     Future {
