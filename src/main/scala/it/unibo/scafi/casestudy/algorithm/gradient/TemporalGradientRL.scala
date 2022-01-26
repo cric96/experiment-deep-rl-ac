@@ -94,8 +94,8 @@ trait TemporalGradientRL extends RLLike {
           action == ConsiderNeighbourhood
         }
         .foreach { case (state, action) => println(s"STATE: ${state.toString} ===> ACTION ${action.toString}") }*/
-      val storage = new LocalStorage[String]("gradientQ")
-      storage.save("q", q)
+      //val storage = new LocalStorage[String]("gradientQ")
+      //storage.save("q", q)
     }
 
     override protected def rewardSignal(output: Double): Double = {

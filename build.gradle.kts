@@ -105,7 +105,6 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             description = "Launches graphic simulation ${it.nameWithoutExtension}"
             main = "it.unibo.alchemist.Alchemist"
             classpath = sourceSets["main"].runtimeClasspath
-            println(it.absolutePath)
             args("-y", it.absolutePath)
             if (System.getenv("CI") == "true") {
                 args("-hl", "-t", "2")
@@ -146,6 +145,7 @@ tasks.register<JavaExec>("startBatchUsing") {
     classpath = sourceSets["main"].runtimeClasspath
     main = "it.unibo.alchemist.Alchemist"
     val program = properties["program"].toString()
+    println("Simulating with: ${program}")
     jvmArgs(
         "-XX:+AggressiveHeap",
         "-Dscalapy.python.programname=/home/gianluca/.pyenv/shims/python"

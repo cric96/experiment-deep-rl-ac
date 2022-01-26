@@ -7,17 +7,19 @@ import java.util.concurrent.Executors
 import java.{util => jutil}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
   implicit class Unsafe(a: Any) {
     def as[T]: T = a.asInstanceOf[T]
     def list: jutil.List[Any] = as[jutil.List[Any]]
     def dict: jutil.Map[AnyRef, Any] = as[jutil.Map[AnyRef, Any]]
+    def head: Any = list.get(0)
   }
   val startingFile = "src/main/yaml/swapSourceGradientRectangle.yml"
   val yaml = new Yaml()
-  val dir = os.temp.dir(prefix = "simulations")
+  // val dir = os.temp.dir(prefix = "simulations")
+  val dir = os.pwd / "data"
   val alphaBetaCombination = List((0.5, 0.01), (0.1, 0.01), (0.3, 0.02))
   val epsilonCombination = List((0.9, 10), (0.05, 100), (0.1, 90), (0.9, 40))
   val bucketsAndMax = List((2, 2), (2, 4), (4, 4), (4, 16), (4, 32))
@@ -36,8 +38,14 @@ object MultiLearningRunner extends App {
     def suffix = s"$alpha-$beta-$epsilon-$decay-$buckets-$max"
     def suffixNumber = s"$i$j$k"
     val base = baseYaml
-    base.put("_beta", s"it.unibo.learning.TimeVariable.independent($beta)")
-    base.put("_alpha", s"it.unibo.learning.TimeVariable.independent($alpha)")
+    val molecules = base.dict.get("deployments").head.dict.get("contents").list.asScala.map(_.dict)
+    def findMoleculeAndUpdate(name: String, value: String): Unit =
+      molecules.filter(_.get("molecule") == name).foreach(_.put("concentration", value))
+    findMoleculeAndUpdate("beta", s"it.unibo.learning.TimeVariable.independent($beta)")
+    findMoleculeAndUpdate("alpha", s"it.unibo.learning.TimeVariable.independent($alpha)")
+    findMoleculeAndUpdate("epsilon", s"it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
+    findMoleculeAndUpdate("buckets", buckets.toDouble.toString)
+    findMoleculeAndUpdate("maxRadiusMultiplier", max.toDouble.toString)
     base
       .get("export")
       .list
@@ -48,7 +56,7 @@ object MultiLearningRunner extends App {
     base.put("_buckets", buckets.toString)
     base.put("_maxRadiusMultiplier", max.toString)
     val file = dir / s"sim-$suffix.yml"
-    os.write(file, yaml.dump(base))
+    os.write.over(file, yaml.dump(base))
     file
   }
   implicit val executionContext =
