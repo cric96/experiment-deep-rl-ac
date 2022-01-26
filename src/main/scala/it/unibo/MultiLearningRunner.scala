@@ -58,17 +58,27 @@ object MultiLearningRunner extends App {
     os.write.over(file, yaml.dump(base))
     file
   }
+  val saneFactor = 4
   implicit val executionContext =
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors / 2))
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors / saneFactor))
 
-  val futures = allSimulations.map(file =>
-    Future {
-      println(s"process: $file")
-      (file, os.proc("./gradlew", "startBatchUsing", s"-Pprogram=${file.wrapped.toFile.toString}").call(check = false))
+  allSimulations
+    .grouped(Runtime.getRuntime.availableProcessors / saneFactor)
+    .map { files =>
+      files.map(file =>
+        Future {
+          println(s"process: $file")
+          (
+            file,
+            os.proc("./gradlew", "startBatchUsing", s"-Pprogram=${file.wrapped.toFile.toString}").call(check = false)
+          )
+        }
+      )
     }
-  )
-  futures.foreach(f => f.onComplete(result => println(result)))
-  futures.foreach(f => Await.result(f, Duration.Inf))
+    .foreach { futures =>
+      futures.foreach(f => f.onComplete(result => println(result)))
+      futures.foreach(f => Await.result(f, Duration.Inf))
+    }
   println("End....")
   System.exit(0)
 }
