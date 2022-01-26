@@ -29,14 +29,15 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
 
     if(!os.exists(imageOutputDir)){ os.makeDir(imageOutputDir) }
 
-    val orderedExperiments =  os.list(dir)
+    val orderedExperiments = os.list(dir)
       .filter(os.isFile)
       .filter(_.toString().contains(experimentName))
       .sortBy(file => {
         val numberWithExtension = file.wrapped.toString.split("-").last
-        numberWithExtension.split("\\.").head
+        numberWithExtension.split("\\.").head.toDouble
       })
 
+    orderedExperiments.foreach(println(_))
     val experiments = orderedExperiments
       .map(file => file.wrapped.toAbsolutePath.toString)
       .map(new File(_))
