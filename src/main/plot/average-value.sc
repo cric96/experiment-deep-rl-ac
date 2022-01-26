@@ -71,7 +71,7 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
     plt.ylabel("average error")
     plt.xlabel("episodes")
     plt.title("training errors")
-    plt.savefig(s"$imageOutputDirPy/mean-error.pdf")
+    plt.savefig(s"$imageOutputDirPy/mean-error.png")
     plt.clf()
 
   }

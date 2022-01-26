@@ -1,6 +1,5 @@
 package it.unibo
 
-import it.unibo.alchemist.model.interfaces.Position
 import org.yaml.snakeyaml.Yaml
 
 import java.io.FileInputStream
@@ -46,6 +45,8 @@ object MultiLearningRunner extends App {
       .dict
       .put("parameters", List(s"gradientExperiments-$suffix", 1.0, s"./data/$suffixNumber").asJava)
     base.put("_epsilon", s" it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
+    base.put("_buckets", buckets.toString)
+    base.put("_maxRadiusMultiplier", max.toString)
     val file = dir / s"sim-$suffix.yml"
     os.write(file, yaml.dump(base))
     file
