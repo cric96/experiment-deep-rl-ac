@@ -105,6 +105,7 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
             description = "Launches graphic simulation ${it.nameWithoutExtension}"
             main = "it.unibo.alchemist.Alchemist"
             classpath = sourceSets["main"].runtimeClasspath
+            println(it.absolutePath)
             args("-y", it.absolutePath)
             if (System.getenv("CI") == "true") {
                 args("-hl", "-t", "2")
@@ -138,4 +139,24 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
 tasks.register<JavaExec>("startMultipleLearning") {
     main = "it.unibo.MultiLearningRunner"
     classpath = sourceSets["main"].runtimeClasspath
+}
+
+tasks.register<JavaExec>("startBatchUsing") {
+    group = alchemistGroup
+    classpath = sourceSets["main"].runtimeClasspath
+    main = "it.unibo.alchemist.Alchemist"
+    val program = properties["program"].toString()
+    jvmArgs(
+        "-XX:+AggressiveHeap",
+        "-Dscalapy.python.programname=/home/gianluca/.pyenv/shims/python"
+    )
+    maxHeapSize = "${minOf(heap.toInt(), Runtime.getRuntime().availableProcessors() * taskSize)}m"
+    args(
+        //"-b",
+        "-y", file(program).absolutePath,
+        "-var", "episode",
+        "-p", threadCount,
+        "-i", 1
+    )
+
 }

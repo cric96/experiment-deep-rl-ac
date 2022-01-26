@@ -1,15 +1,13 @@
 package it.unibo
 
-import it.unibo.alchemist.launch.HeadlessSimulationLauncher
-import it.unibo.alchemist.loader.LoadAlchemist
-import it.unibo.alchemist.loader.providers.YamlProvider
 import it.unibo.alchemist.model.interfaces.Position
 import org.yaml.snakeyaml.Yaml
 
 import java.io.FileInputStream
 import java.util.concurrent.Executors
 import java.{util => jutil}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters.SeqHasAsJava
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
@@ -41,20 +39,28 @@ object MultiLearningRunner extends App {
     val base = baseYaml
     base.put("_beta", s"it.unibo.learning.TimeVariable.independent($beta)")
     base.put("_alpha", s"it.unibo.learning.TimeVariable.independent($alpha)")
-    println(base.get("export"))
     base
       .get("export")
       .list
       .get(0)
       .dict
       .put("parameters", List(s"gradientExperiments-$suffix", 1.0, s"./data/$suffixNumber").asJava)
-    println(base.get("export"))
     base.put("_epsilon", s" it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
-    val file = dir / s"sim-$suffix"
+    val file = dir / s"sim-$suffix.yml"
     os.write(file, yaml.dump(base))
-    LoadAlchemist.from(file.getInputStream, YamlProvider.INSTANCE)
+    file
   }
-  trait P extends Position[P]
-  val execution = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors))
-  allSimulations.foreach(a => HeadlessSimulationLauncher.INSTANCE.launch(a, Helper.create()))
+  implicit val executionContext =
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors))
+
+  val futures = allSimulations.map(file =>
+    Future {
+      println(s"process: $file")
+      (file, os.proc("./gradlew", "startBatchUsing", s"-Pprogram=${file.wrapped.toFile.toString}").call(check = false))
+    }
+  )
+  futures.foreach(f => f.onComplete(result => println(result)))
+  futures.foreach(f => Await.result(f, Duration.Inf))
+  println("End....")
+  System.exit(0)
 }
