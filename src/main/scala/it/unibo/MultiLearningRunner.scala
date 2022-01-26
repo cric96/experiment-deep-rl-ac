@@ -58,7 +58,7 @@ object MultiLearningRunner extends App {
     os.write.over(file, yaml.dump(base))
     file
   }
-  val saneFactor = 4
+  val saneFactor = 8
   implicit val executionContext =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors / saneFactor))
 
