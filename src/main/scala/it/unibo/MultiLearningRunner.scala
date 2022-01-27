@@ -20,10 +20,10 @@ object MultiLearningRunner extends App {
   val yaml = new Yaml()
   val dir = os.temp.dir(prefix = "simulations")
 
-  val gamma = List(0.9, 0.95, 0.5, 0.1)
-  val alphaBetaCombination = List((0.5, 0.05), (0.1, 0.01), (0.9, 0.1))
-  val epsilonCombination = List((0.9, 500), (0.05, 1000), (0.1, 900), (0.02, 2000))
-  val bucketsAndMax = List((2, 4), (2, 8), (4, 4), (4, 16), (4, 32))
+  val gamma = List(0.9, 0.5)
+  val alphaBetaCombination = List((0.5, 0.05), (0.1, 0.01))
+  val epsilonCombination = List((0.01, 1000), (0.03, 1000), (0.1, 200))
+  val bucketsAndMax = List((4, 32), (4, 64), (5, 32))
 
   def baseYaml = {
     val loader = new FileInputStream(startingFile)
