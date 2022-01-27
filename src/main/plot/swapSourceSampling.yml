@@ -1,0 +1,47 @@
+the_plots_labels:
+  - Time                 #0
+  - 'mean optimal Gradient'
+  - 'mean classic'
+  - 'mean bis'
+  - 'mean crf'
+  - 'mean temporal RL'
+  - 'mean crf RL'
+  - 'mean crf with action RL'
+  - 'mean deep RL'
+  - 'error Classic'
+  - 'error Temporal RL'
+  - 'error crf RL'
+  - 'error crf with action  RL'
+  - 'error deep RL'
+  - 'error crf'
+  - 'error bis'
+the_plots_formats:
+  - [0, 1, 2, 3, 4, 5, 6, 7, 8]
+  - [0, 9, 10, 11, 12, 13, 14]
+line_widths:
+  - [ 2, 4, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2 ]
+default_colors: &default_colors ["black", "black", "red","darkgreen","gold",
+                                 "orchid", "teal", "darkviolet",
+                                 "darkorchid", "navy", "cyan", "brown", "yellow", "gray", "magenta"]
+the_plots_colors:
+  - *default_colors
+legend_position:
+  - "upper right"
+  - "upper right"
+legend_size: 12
+force_limit_plot_y:
+#  1: 140
+#   3: 1000
+#  4: 35
+#  0: 40
+#  3: 80
+start_plot_x:
+  0: 90
+force_limit_plot_x:
+#  0: 820
+#  1: 800
+#  3: 800
+title_prefix: ''
+#excluded_titles: [0]
+sampling: true
+samplingField: episode
