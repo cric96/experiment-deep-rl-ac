@@ -16,12 +16,15 @@ object MultiLearningRunner extends App {
     def dict: jutil.Map[AnyRef, Any] = as[jutil.Map[AnyRef, Any]]
     def head: Any = list.get(0)
   }
-  val startingFile = "src/main/yaml/swapSourceGradientRectangle.yml"
+  val startingFile = "src/main/yaml/swapSourceGradientRectangleLong.yml"
   val yaml = new Yaml()
   val dir = os.temp.dir(prefix = "simulations")
-  val alphaBetaCombination = List((0.5, 0.01), (0.1, 0.01), (0.3, 0.02))
-  val epsilonCombination = List((0.9, 10), (0.05, 100), (0.1, 90), (0.9, 40))
-  val bucketsAndMax = List((2, 2), (2, 4), (4, 4), (4, 16), (4, 32))
+
+  val gamma = List(0.9, 0.95, 0.5, 0.1)
+  val alphaBetaCombination = List((0.5, 0.05), (0.1, 0.01), (0.9, 0.1))
+  val epsilonCombination = List((0.9, 500), (0.05, 1000), (0.1, 900), (0.02, 2000))
+  val bucketsAndMax = List((2, 4), (2, 8), (4, 4), (4, 16), (4, 32))
+
   def baseYaml = {
     val loader = new FileInputStream(startingFile)
     val result = yaml.load[java.util.Map[String, Object]](loader)
@@ -33,9 +36,10 @@ object MultiLearningRunner extends App {
     ((alpha, beta), i) <- alphaBetaCombination.zipWithIndex
     ((epsilon, decay), j) <- epsilonCombination.zipWithIndex
     ((buckets, max), k) <- bucketsAndMax.zipWithIndex
+    (gamma, z) <- gamma.zipWithIndex
   } yield {
-    def suffix = s"$alpha-$beta-$epsilon-$decay-$buckets-$max"
-    def suffixNumber = s"$i$j$k"
+    def suffix = s"$alpha-$beta-$epsilon-$decay-$buckets-$max-$gamma"
+    def suffixNumber = s"$i$j$k$z"
     val base = baseYaml
     val molecules = base.dict.get("deployments").head.dict.get("contents").list.asScala.map(_.dict)
     def findMoleculeAndUpdate(name: String, value: String): Unit =
@@ -44,6 +48,7 @@ object MultiLearningRunner extends App {
     findMoleculeAndUpdate("alpha", s"it.unibo.learning.TimeVariable.independent($alpha)")
     findMoleculeAndUpdate("epsilon", s"it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
     findMoleculeAndUpdate("buckets", buckets.toDouble.toString)
+    findMoleculeAndUpdate("gamma", gamma.toString)
     findMoleculeAndUpdate("maxRadiusMultiplier", max.toDouble.toString)
     base
       .get("export")
