@@ -16,14 +16,14 @@ object MultiLearningRunner extends App {
     def dict: jutil.Map[AnyRef, Any] = as[jutil.Map[AnyRef, Any]]
     def head: Any = list.get(0)
   }
-  val startingFile = "src/main/yaml/swapSourceGradientRectangleLong.yml"
+  val startingFile = "src/main/yaml/swapSourceGradientRectangleVariable.yml"
   val yaml = new Yaml()
   val dir = os.temp.dir(prefix = "simulations")
 
-  val gamma = List(0.9, 0.5)
-  val alphaBetaCombination = List((0.5, 0.05), (0.1, 0.01))
-  val epsilonCombination = List((0.01, 1000), (0.03, 1000), (0.1, 200))
-  val bucketsAndMax = List((32, 4), (64, 4), (32, 5))
+  val gamma = List(0.9, 0.5, 0.99)
+  val alphaBetaCombination = List((0.5, 0.1), (0.1, 0.01))
+  val epsilonCombination = List((0.01, 1000), (0.03, 1000), (0.1, 500), (0.2, 400))
+  val bucketsAndMax = List((32, 4), (64, 4), (128, 5))
 
   def baseYaml = {
     val loader = new FileInputStream(startingFile)
