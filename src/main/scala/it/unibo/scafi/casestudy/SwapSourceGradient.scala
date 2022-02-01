@@ -21,7 +21,11 @@ class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike 
   @SuppressWarnings(Array("wartremover:Serializable"))
   val actions: List[TemporalGradientRL.Action] =
     List[TemporalGradientRL.Action](ConsiderNeighbourhood) ::: List[TemporalGradientRL.Action](
-      Ignore(crfRisingSpeed)
+      Ignore(crfRisingSpeed),
+      Ignore(crfRisingSpeed - 5),
+      Ignore(crfRisingSpeed + 10),
+      Ignore(crfRisingSpeed + 20),
+      Ignore(crfRisingSpeed + 30)
     )
   lazy val temporalRLGradient = new TemporalRLAlgorithm(
     parameters,
