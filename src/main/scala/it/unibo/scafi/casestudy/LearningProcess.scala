@@ -39,6 +39,12 @@ object LearningProcess {
       LearningContext(q, statePolicy, rewardSignal, actionEffect, InitialCondition(initialState, initialOutput))
   }
 
+  /**
+    *
+    * @tparam S State
+    * @tparam A Action
+    * @tparam O Output
+    */
   case class LearningContext[S, A, O](
       q: Q[S, A],
       statePolicy: (O, A) => S,
