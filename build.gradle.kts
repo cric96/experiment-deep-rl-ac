@@ -137,6 +137,9 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
     }
 tasks.register<JavaExec>("startMultipleLearning") {
     main = "it.unibo.MultiLearningRunner"
+    properties
+        .filter { (k, v) -> k.startsWith("X")}
+        .forEach { (k, v) -> args(k.drop(1), v) }
     classpath = sourceSets["main"].runtimeClasspath
 }
 
