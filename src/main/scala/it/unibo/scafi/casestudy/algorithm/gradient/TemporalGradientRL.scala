@@ -8,7 +8,7 @@ import it.unibo.learning.{Policy, Q, QLearning}
 import it.unibo.scafi.casestudy.algorithm.RLLike
 import it.unibo.scafi.casestudy.algorithm.RLLike.AlgorithmHyperparameter
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL._
-import it.unibo.scafi.casestudy.{GradientLikeLearning, TemporalStateManagement}
+import it.unibo.scafi.casestudy.{GlobalStore, GradientLikeLearning, TemporalStateManagement}
 import it.unibo.storage.LocalStorage
 import upickle.default.{macroRW, ReadWriter => RW}
 
@@ -81,13 +81,22 @@ trait TemporalGradientRL extends RLLike {
 
     override protected def initialState: History = History(Seq.empty)
 
-    override protected def q: Q[History, Action] = TemporalGradientRL.q
+    override protected def q: Q[History, Action] = {
+      if (node.has("simulation_id")) {
+        GlobalStore.get[Q[History, Action]](node.get("simulation_id"))
+      } else {
+        TemporalGradientRL.q
+      }
+    }
 
     override def episodeEnd(nodes: Iterable[NodeManager]): Unit = {
       println(":::::CHECK GREEDY POLICY:::::")
       val policy = Policy.greedy[History, Action](actionSet)
-      val states = TemporalGradientRL.q.initialConfig.keys.map(_._1)
-      println(s"STATE VISITED: ${states.size.toString}")
+      q match {
+        case MutableQ(initialConfig) =>
+          val states = initialConfig.keys.map(_._1)
+          println(s"STATE VISITED: ${states.size.toString}")
+      }
       /*states
         .map(state => state -> policy(state, q))
         .filterNot { case (state, action) =>

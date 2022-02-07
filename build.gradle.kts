@@ -28,6 +28,7 @@ dependencies {
     implementation("it.unibo.alchemist:alchemist:_")
     implementation("it.unibo.alchemist:alchemist-incarnation-scafi:_")
     implementation("it.unibo.alchemist:alchemist-swingui:_")
+    implementation("ch.qos.logback:logback-classic:1.2.10")
     // Scala par
     implementation("org.scala-lang.modules:scala-parallel-collections_${scala}:_")
     // Scala py
