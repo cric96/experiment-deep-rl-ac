@@ -1,23 +1,30 @@
 package it.unibo.launcher
 
-import ch.qos.logback.classic.Level
 import it.unibo.Logger
 import it.unibo.alchemist.Alchemist
 import it.unibo.learning.Q.MutableQ
 import it.unibo.scafi.casestudy.GlobalStore
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL.{Action, History}
-import org.slf4j.LoggerFactory
 import org.yaml.snakeyaml.Yaml
 import upickle.default.read
 
 import java.io.FileInputStream
 import java.util.concurrent.{CountDownLatch, Executors, Semaphore}
+import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsJava}
 
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
-  LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).as[ch.qos.logback.classic.Logger].setLevel(Level.TRACE)
+  val configuration: Seq[String] = {
+    if (args.contains("file")) {
+      val fileToRead = args(args.indexOf("file") + 1)
+      upickle.default.read[List[String]](os.read(os.pwd / fileToRead))
+    } else {
+      ArraySeq.unsafeWrapArray(args)
+    }
+  }
+  println(findInArgs("program"))
   private val yaml = new Yaml()
   private val baseFolder = "src/main/yaml/"
   private val experimentName = findInArgs("program").getOrElse("swapSourceGradientRectangleVariable.yml")
@@ -33,15 +40,15 @@ object MultiLearningRunner extends App {
     findInArgs("bucketsMax").map(read[List[(Int, Int)]](_)).getOrElse(List((32, 4), (64, 4), (128, 5)))
   val learningEpisodes = findInArgs("learningEpisodes")
   val greedyEpisodes = findInArgs("greedyEpisodes")
-  Logger().trace("---- RECAP -----")
-  Logger().trace(s"- Program = $startingFile")
-  Logger().trace(s"- Gamma = $gamma")
-  Logger().trace(s"- Alpha and Beta = $alphaBetaCombination")
-  Logger().trace(s"- epsilon = $epsilonCombination")
-  Logger().trace(s"- bucket count and max range = $bucketsAndMax")
-  Logger().trace(s"- has learning episodes?: ${learningEpisodes.nonEmpty}")
-  Logger().trace(s"- has greedy episodes?: ${greedyEpisodes.nonEmpty}")
-  Logger().trace("--- END ------")
+  Logger().warn("---- RECAP -----")
+  Logger().warn(s"- Program = $startingFile")
+  Logger().warn(s"- Gamma = $gamma")
+  Logger().warn(s"- Alpha and Beta = $alphaBetaCombination")
+  Logger().warn(s"- epsilon = $epsilonCombination")
+  Logger().warn(s"- bucket count and max range = $bucketsAndMax")
+  Logger().warn(s"- has learning episodes?: ${learningEpisodes.nonEmpty}")
+  Logger().warn(s"- has greedy episodes?: ${greedyEpisodes.nonEmpty}")
+  Logger().warn("--- END ------")
   val allSimulations = for {
     ((alpha, beta), i) <- alphaBetaCombination.zipWithIndex
     ((epsilon, decay), j) <- epsilonCombination.zipWithIndex
@@ -50,7 +57,7 @@ object MultiLearningRunner extends App {
   } yield {
     def suffix = s"$alpha-$beta-$epsilon-$decay-$buckets-$max-$gamma"
     def suffixNumber = s"$i$j$k$z"
-    Logger().trace(s"Prepare: $suffix")
+    Logger().warn(s"Prepare: $suffix")
     val base = baseYaml
     val molecules = base.dict.get("deployments").head.dict.get("contents").list.asScala.map(_.dict)
     val variables = base.dict.get("variables").dict
@@ -91,21 +98,22 @@ object MultiLearningRunner extends App {
   allSimulations
     .foreach { file =>
       synch.acquire()
-      Logger().trace(s"Launch :${file.toIO.getName}")
+      Logger().warn(s"Launch :${file.toIO.getName}")
       Future {
-        Alchemist.main(Array("-y", file.toString(), "-var", "episode", "-p", "1", "-i", "1", "-hl"))
+        Alchemist.main(Array("-y", file.toString(), "-var", "episode", "-p", "1", "-i", "1", "-hl", "-q"))
         synch.release()
         latch.countDown()
-        Logger().trace(s"End: $file")
+        Logger().warn(s"End: $file")
       }
     }
   latch.await()
   System.exit(0)
 
-  private def findInArgs(name: String): Option[String] =
-    args.zipWithIndex
+  private def findInArgs(name: String): Option[String] = {
+    configuration.zipWithIndex
       .find(_._1 == name)
-      .flatMap { case (_, index) => args.zipWithIndex.map { case (v, k) => k -> v }.toMap.get(index + 1) }
+      .flatMap { case (_, index) => configuration.zipWithIndex.map { case (v, k) => k -> v }.toMap.get(index + 1) }
+  }
 
   private def baseYaml = {
     val loader = new FileInputStream(startingFile)
