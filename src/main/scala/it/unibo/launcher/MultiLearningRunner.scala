@@ -10,11 +10,10 @@ import org.slf4j.LoggerFactory
 import org.yaml.snakeyaml.Yaml
 import upickle.default.read
 
-import java.{util => jutil}
 import java.io.FileInputStream
 import java.util.concurrent.{CountDownLatch, Executors, Semaphore}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsJava}
 
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
@@ -65,21 +64,15 @@ object MultiLearningRunner extends App {
     def findMoleculeAndUpdate(name: String, value: String): Unit =
       molecules.filter(_.get("molecule") == name).foreach(_.put("concentration", value))
     /// Put molecules
-    findMoleculeAndUpdate("beta", s"it.unibo.learning.TimeVariable.independent($beta)")
-    findMoleculeAndUpdate("alpha", s"it.unibo.learning.TimeVariable.independent($alpha)")
-    findMoleculeAndUpdate("epsilon", s"it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
+    findMoleculeAndUpdate("beta", independent(beta))
+    findMoleculeAndUpdate("alpha", independent(alpha))
+    findMoleculeAndUpdate("epsilon", decayWith(epsilon, decay))
     findMoleculeAndUpdate("buckets", buckets.toDouble.toString)
     findMoleculeAndUpdate("gamma", gamma.toString)
     findMoleculeAndUpdate("maxRadiusMultiplier", max.toDouble.toString)
-    // Put constants
-    base.put("_epsilon", s" it.unibo.learning.TimeVariable.exponentialDecayFunction($epsilon, $decay)")
-    base.put("_buckets", buckets.toString)
-    base.put("_maxRadiusMultiplier", max.toString)
     // Put simulation maps
-    val simulationIdMap = new jutil.HashMap[AnyRef, Any]()
-    simulationIdMap.put("molecule", "simulation_id")
-    simulationIdMap.put("concentration", s"\"$suffixNumber\"")
-    base.dict.get("deployments").head.dict.get("contents").list.add(simulationIdMap)
+    val simulationId = Map("molecule" -> "simulation_id", "concentration" -> s"\"$suffixNumber\"").asJava
+    base.dict.get("deployments").head.dict.get("contents").list.add(simulationId)
     exportsSection.put(
       "parameters",
       List(s"gradientExperiments-$suffix-$suffixNumber", 1.0, s"./data/$suffixNumber").asJava
@@ -120,4 +113,8 @@ object MultiLearningRunner extends App {
     loader.close()
     result
   }
+
+  private def independent(value: Any): String = s"it.unibo.learning.TimeVariable.independent($value)"
+  private def decayWith(value: Any, decay: Any): String =
+    s"it.unibo.learning.TimeVariable.exponentialDecayFunction($value, $decay)"
 }

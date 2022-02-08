@@ -137,7 +137,7 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
         runAllBatch.dependsOn(batch)
     }
 tasks.register<JavaExec>("startMultipleLearning") {
-    main = "it.unibo.MultiLearningRunner"
+    main = "it.unibo.launcher.MultiLearningRunner"
     properties
         .filter { (k, v) -> k.startsWith("X")}
         .forEach { (k, v) -> args(k.drop(1), v) }
