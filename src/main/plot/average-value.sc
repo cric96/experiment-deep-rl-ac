@@ -37,7 +37,6 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
         numberWithExtension.split("\\.").head.toDouble
       })
 
-    orderedExperiments.foreach(println(_))
     val experiments = orderedExperiments
       .map(file => file.wrapped.toAbsolutePath.toString)
       .map(new File(_))
