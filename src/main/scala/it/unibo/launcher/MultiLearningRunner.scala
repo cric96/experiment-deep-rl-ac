@@ -1,10 +1,12 @@
 package it.unibo.launcher
 
+import ch.qos.logback.classic.Level
 import it.unibo.Logger
 import it.unibo.alchemist.Alchemist
 import it.unibo.learning.Q.MutableQ
 import it.unibo.scafi.casestudy.GlobalStore
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL.{Action, History}
+import org.slf4j.LoggerFactory
 import org.yaml.snakeyaml.Yaml
 import upickle.default.read
 
@@ -12,10 +14,11 @@ import java.io.FileInputStream
 import java.util.concurrent.{CountDownLatch, Executors, Semaphore}
 import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsJava}
+import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava, SeqHasAsJava}
 
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
+  LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).as[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
   val configuration: Seq[String] = {
     if (args.contains("file")) {
       val fileToRead = args(args.indexOf("file") + 1)
@@ -24,7 +27,6 @@ object MultiLearningRunner extends App {
       ArraySeq.unsafeWrapArray(args)
     }
   }
-  println(findInArgs("program"))
   private val yaml = new Yaml()
   private val baseFolder = "src/main/yaml/"
   private val experimentName = findInArgs("program").getOrElse("swapSourceGradientRectangleVariable.yml")
@@ -100,7 +102,7 @@ object MultiLearningRunner extends App {
       synch.acquire()
       Logger().warn(s"Launch :${file.toIO.getName}")
       Future {
-        Alchemist.main(Array("-y", file.toString(), "-var", "episode", "-p", "1", "-i", "1", "-hl", "-q"))
+        Alchemist.main(Array("-y", file.toString(), "-var", "episode", "-p", "1", "-i", "1", "-hl"))
         synch.release()
         latch.countDown()
         Logger().warn(s"End: $file")
