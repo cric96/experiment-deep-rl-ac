@@ -45,35 +45,44 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
       .map(file => file.filter(row => row.forall(!_.contains("#"))))
       .drop(skip)
 
-    val selectedIndicies = experiments
-      .map(
-        experiment => experiment.map(row => select(row, indices:_*)).map(row => row.map(_.toDouble))
-      ).map(_.drop(1))
-      .map(
-        experiment => {
-          experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
-        }
-      )
+    def process(): Unit = {
+      val selectedIndicies = experiments
+        .map(
+          experiment => experiment.map(row => select(row, indices:_*)).map(row => row.map(_.toDouble))
+        ).map(_.drop(1))
+        .map(
+          experiment => {
+            experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
+          }
+        )
+      
+      val totalError = selectedIndicies.map(_.zipWithIndex).flatMap(_.map { case (k, v) => (v, k)}).groupMapReduce(_._1)(_._2)(_ + _)
 
-
-    val plotIndicies = experiments.indices.toList
-    val plots = selectedIndicies
-      .map(element => element.map(List(_)))
-      .reduce((acc, data) => acc.zip(data).map { case (acc, data) => acc ::: data})
-      .map(_.toPythonCopy)
-      .toSeq
-
-    // Python part
-    val plt = py.module("matplotlib.pyplot")
-    py.module("matplotlib").rc("figure", figsize = (7, 2))
-    plots.foreach(plot => plt.plot(plot))
-    //plt.show()
-    plt.ylabel("average error")
-    plt.xlabel("episodes")
-    plt.title("training errors")
-    plt.savefig(s"$imageOutputDirPy/mean-error.png")
-    plt.clf()
-
+      println(s"Stats: ${totalError}")
+      val plotIndicies = experiments.indices.toList
+      val plots = selectedIndicies
+        .map(element => element.map(List(_)))
+        .reduce((acc, data) => acc.zip(data).map { case (acc, data) => acc ::: data})
+        .map(_.toPythonCopy)
+        .toSeq
+      
+      // Python part
+      val plt = py.module("matplotlib.pyplot")
+      py.module("matplotlib").rc("figure", figsize = (7, 2))
+      plots.foreach(plot => plt.plot(plot))
+      //plt.show()
+      plt.ylabel("average error")
+      plt.xlabel("episodes")
+      plt.title("training errors")
+      plt.savefig(s"$imageOutputDirPy/mean-error.png")
+      plt.clf()
+    }
+    if(experiments.isEmpty) {
+      println(s"Skip: ${dir}")
+    } else {
+      println(s"Process: ${dir}")
+      process()
+    }
   }
   createPlotsForExperiments(workingDir)
   suddirs.foreach(createPlotsForExperiments)
