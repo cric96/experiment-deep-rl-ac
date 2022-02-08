@@ -1,7 +1,7 @@
 package it.unibo
 
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 object Logger {
-  def apply() = LoggerFactory.getLogger("")
+  def apply(): Logger = LoggerFactory.getLogger("")
 }
