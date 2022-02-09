@@ -1,7 +1,7 @@
 package it.unibo.scafi.casestudy.algorithm.gradient
 
 import cats.data.NonEmptySet
-import it.unibo.Logger
+import it.unibo.Logging
 import it.unibo.alchemist.model.implementations.nodes.NodeManager
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.{ScafiAlchemistSupport, _}
 import it.unibo.learning.Q.MutableQ
@@ -91,12 +91,12 @@ trait TemporalGradientRL extends RLLike {
     }
 
     override def episodeEnd(nodes: Iterable[NodeManager]): Unit = {
-      Logger().warn(":::::CHECK GREEDY POLICY:::::")
+      Logging().warn(":::::CHECK GREEDY POLICY:::::")
       val policy = Policy.greedy[History, Action](actionSet)
       q match {
         case MutableQ(initialConfig) =>
           val states = initialConfig.keys.map(_._1)
-          Logger().warn(s"STATE VISITED: ${states.size.toString}")
+          Logging().warn(s"STATE VISITED: ${states.size.toString}")
       }
       /*states
         .map(state => state -> policy(state, q))

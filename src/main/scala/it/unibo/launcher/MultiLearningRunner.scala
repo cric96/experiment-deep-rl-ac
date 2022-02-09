@@ -1,7 +1,7 @@
 package it.unibo.launcher
 
 import ch.qos.logback.classic.Level
-import it.unibo.Logger
+import it.unibo.Logging
 import it.unibo.alchemist.Alchemist
 import it.unibo.learning.Q.MutableQ
 import it.unibo.scafi.casestudy.GlobalStore
@@ -42,15 +42,15 @@ object MultiLearningRunner extends App {
     findInArgs("bucketsMax").map(read[List[(Int, Int)]](_)).getOrElse(List((32, 4), (64, 4), (128, 5)))
   val learningEpisodes = findInArgs("learningEpisodes")
   val greedyEpisodes = findInArgs("greedyEpisodes")
-  Logger().warn("---- RECAP -----")
-  Logger().warn(s"- Program = $startingFile")
-  Logger().warn(s"- Gamma = $gamma")
-  Logger().warn(s"- Alpha and Beta = $alphaBetaCombination")
-  Logger().warn(s"- epsilon = $epsilonCombination")
-  Logger().warn(s"- bucket count and max range = $bucketsAndMax")
-  Logger().warn(s"- has learning episodes?: ${learningEpisodes.nonEmpty}")
-  Logger().warn(s"- has greedy episodes?: ${greedyEpisodes.nonEmpty}")
-  Logger().warn("--- END ------")
+  Logging().warn("---- RECAP -----")
+  Logging().warn(s"- Program = $startingFile")
+  Logging().warn(s"- Gamma = $gamma")
+  Logging().warn(s"- Alpha and Beta = $alphaBetaCombination")
+  Logging().warn(s"- epsilon = $epsilonCombination")
+  Logging().warn(s"- bucket count and max range = $bucketsAndMax")
+  Logging().warn(s"- has learning episodes?: ${learningEpisodes.nonEmpty}")
+  Logging().warn(s"- has greedy episodes?: ${greedyEpisodes.nonEmpty}")
+  Logging().warn("--- END ------")
   val allSimulations = for {
     ((alpha, beta), i) <- alphaBetaCombination.zipWithIndex
     ((epsilon, decay), j) <- epsilonCombination.zipWithIndex
@@ -59,7 +59,7 @@ object MultiLearningRunner extends App {
   } yield {
     def suffix = s"$alpha-$beta-$epsilon-$decay-$buckets-$max-$gamma"
     def suffixNumber = s"$i$j$k$z"
-    Logger().warn(s"Prepare: $suffix")
+    Logging().warn(s"Prepare: $suffix")
     val base = baseYaml
     val molecules = base.dict.get("deployments").head.dict.get("contents").list.asScala.map(_.dict)
     val variables = base.dict.get("variables").dict
@@ -100,12 +100,12 @@ object MultiLearningRunner extends App {
   allSimulations
     .foreach { file =>
       synch.acquire()
-      Logger().warn(s"Launch :${file.toIO.getName}")
+      Logging().warn(s"Launch :${file.toIO.getName}")
       Future {
         Alchemist.main(Array("-y", file.toString(), "-var", "episode", "-p", "1", "-i", "1", "-hl"))
         synch.release()
         latch.countDown()
-        Logger().warn(s"End: $file")
+        Logging().warn(s"End: $file")
       }
     }
   latch.await()

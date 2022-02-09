@@ -1,6 +1,6 @@
 package it.unibo.scafi.casestudy
 
-import it.unibo.Logger
+import it.unibo.Logging
 import it.unibo.alchemist.model.implementations.nodes.SimpleNodeManager
 import it.unibo.alchemist.tiggers.EndHandler
 import it.unibo.scafi.casestudy.LearningProcess.{RoundData, Trajectory}
@@ -28,9 +28,9 @@ trait SwapSourceLike extends GradientLike {
     val storeMonitor = new EndHandler[Any](
       sharedLogic = () => {},
       leaderLogic = () => {
-        Logger().warn(s"Agents learn? ${learnCondition.toString}")
-        Logger().warn(s"Episodes: ${episode.toString}")
-        Logger().warn(s"Epsilon: ${epsilon.value(episode).toString}")
+        Logging().warn(s"Agents learn? ${learnCondition.toString}")
+        Logging().warn(s"Episodes: ${episode.toString}")
+        Logging().warn(s"Epsilon: ${epsilon.value(episode).toString}")
         val nodes = alchemistEnvironment.getNodes.iterator().asScala.toList.map(node => new SimpleNodeManager(node))
         algorithms.foreach(_.episodeEnd(nodes))
       },
