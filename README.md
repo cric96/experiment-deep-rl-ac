@@ -1,5 +1,5 @@
 # Towards Reinforcement Learning-based Aggregate Computing
-## Case study: Hysteretic Q-Learning applied in Gradient Building blocks
+## Case study: Hysteretic Q-Learning applied in Gradient Building block
 
 This repository contains the experiments for *Towards Reinforcement Learning-based Aggregate Computing*.
 These experiments serve as a motivation in which *learning* could be used to improve current *aggregate computing* blocks leaving the same high-level API.
