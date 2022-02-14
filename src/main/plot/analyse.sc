@@ -25,7 +25,7 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
   }
   val workingDir = os.pwd / "data"
   val suddirs = os.list(workingDir).filter(os.isDir(_)).filterNot(_.wrapped.toAbsolutePath.toString.contains("img"))
-  var best = Double.PositiveInfinity // utily...
+  var best = Double.PositiveInfinity
   def eval(dir: os.Path): Option[(os.Path, Double, Double, Seq[Double])] = {
     val allExperimentFile = Utils.orderedExperiments(dir, experimentName)
     val nonDroppedExperiments =  Utils.extractData(allExperimentFile)
