@@ -1,10 +1,13 @@
-# Towards Aggregate Computing With Machine Learning
-## Case study: Hysteretic Q-Learning applied in Hop Count Problem.
+# Towards Reinforcement Learning-based Aggregate Computing
+## Case study: Hysteretic Q-Learning applied in Gradient Building blocks
 
-This repository contains the experiments for *Towards Aggregate Computing With Machine Learning"
+This repository contains the experiments for *Towards Reinforcement Learning-based Aggregate Computing*.
+These experiments serve as a motivation in which *learning* could be used to improve current *aggregate computing* blocks leaving the same high-level API.
 
 ### Requirements
-
+- gradle;
+- python > 3;
+- ammonite shell 2.5.1 (for scala 2.13).
 ### Description
 
 ### Commands
