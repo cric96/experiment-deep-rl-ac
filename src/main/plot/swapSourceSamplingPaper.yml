@@ -1,0 +1,48 @@
+the_plots_labels:
+  - Time                 #0
+  - 'mean optimal'
+  - 'mean classic'
+  - 'mean bis'
+  - 'mean CRF'
+  - 'mean RL'
+  - '_'
+  - '_'
+  - '_'
+  - 'error Classic'
+  - 'error RL'
+  - '_'
+  - '_'
+  - '_'
+  - 'error CRF'
+  - 'error CRF'
+the_plots_formats:
+  - [0, 1, 2, 4, 5]
+  - [0, 9, 10, 14]
+line_widths:
+  - [ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ]
+default_colors: &default_colors ["black", "red", "teal", "_", "darkgreen", "gold",
+                                 "_", "_", "_", "teal", "gold", "_", "_", "_", "darkgreen"]
+the_plots_colors:
+  - *default_colors
+legend_position:
+  - "upper left"
+  - "upper left"
+legend_size: 12
+force_limit_plot_y:
+start_plot_x:
+force_limit_plot_x:
+sampling:
+  - True
+samplingField:
+  - episode
+vlines:
+  0: [[35, { linestyle: ':' , color: 'black', linewidth: 1}]]
+  1: [[35, { linestyle: ':' , color: 'black', linewidth: 1}]]
+title_prefix: 'Internal metrics'
+excluded_titles:
+  - [0]
+  - [0]
+line_styles:
+  - ['solid', 'dashed', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
+     'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid']
+format: "pdf"

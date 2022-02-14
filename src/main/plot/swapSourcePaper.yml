@@ -3,26 +3,26 @@ the_plots_labels:
   - 'mean optimal Gradient'
   - 'mean classic'
   - 'mean bis'
-  - 'mean crf'
-  - 'mean temporal RL'
-  - 'mean crf RL'
-  - 'mean crf with action RL'
-  - 'mean deep RL'
+  - 'mean CRF'
+  - 'mean RL'
+  - '_'
+  - '_'
+  - '_'
   - 'error Classic'
-  - 'error Temporal RL'
-  - 'error crf RL'
-  - 'error crf with action  RL'
-  - 'error deep RL'
-  - 'error crf'
-  - 'error bis'
+  - 'error RL'
+  - '_'
+  - '_'
+  - '_'
+  - '_'
+  - '_'
 the_plots_formats:
-  - [0, 1, 2, 3, 4, 5, 6, 7, 8]
-  - [0, 9, 10, 11, 12, 13, 14]
+  - [0, 1, 4, 5]
+  - [0, 9, 10, 14]
 line_widths:
   - [ 2, 4, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2 ]
-default_colors: &default_colors ["black", "black", "red","darkgreen","gold",
-                                 "orchid", "teal", "darkviolet",
-                                 "darkorchid", "navy", "cyan", "brown", "yellow", "gray", "magenta"]
+default_colors: &default_colors ["black", "teal", "_", "darkgreen", "gold",
+                                 "_", "_", "_",
+                                 "_", "teal", "gold", "_", "_", "_", "darkgreen"]
 y_labels:
   - 'index value'
 

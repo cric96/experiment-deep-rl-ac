@@ -20,9 +20,9 @@ class SwapSourceGradient extends SwapSourceLike with TemporalGradientRL {
   @SuppressWarnings(Array("wartremover:Serializable"))
   val actions: List[TemporalGradientRL.Action] =
     List[TemporalGradientRL.Action](ConsiderNeighbourhood) ::: List[TemporalGradientRL.Action](
-      Ignore(crfRisingSpeed) /*,
-      Ignore(crfRisingSpeed - 5),
-      Ignore(crfRisingSpeed + 10),
+      Ignore(crfRisingSpeed),
+      Ignore(crfRisingSpeed - 5)
+      /*Ignore(crfRisingSpeed + 10),
       Ignore(crfRisingSpeed + 20),
       Ignore(crfRisingSpeed + 30)*/
     )
@@ -32,8 +32,7 @@ class SwapSourceGradient extends SwapSourceLike with TemporalGradientRL {
     radius,
     maxRadiusMultiplier,
     buckets,
-    windowDifferenceSize,
-    trajectorySize
+    windowDifferenceSize
   )
   // Alchemist molecules
   lazy val radius: Double = node.get("range")

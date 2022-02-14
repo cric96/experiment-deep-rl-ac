@@ -32,8 +32,7 @@ trait TemporalGradientRL extends RLLike {
       radius: Double,
       maxBound: Int,
       bucketsCount: Int,
-      windowDifferenceSize: Int,
-      trajectorySize: Int
+      windowDifferenceSize: Int
   )(implicit rand: Random)
       extends AlgorithmTemplate[History, Action] {
 
@@ -98,14 +97,6 @@ trait TemporalGradientRL extends RLLike {
           val states = initialConfig.keys.map(_._1)
           Logging().warn(s"STATE VISITED: ${states.size.toString}")
       }
-      /*states
-        .map(state => state -> policy(state, q))
-        .filterNot { case (state, action) =>
-          action == ConsiderNeighbourhood
-        }
-        .foreach { case (state, action) => println(s"STATE: ${state.toString} ===> ACTION ${action.toString}") }*/
-      //val storage = new LocalStorage[String]("gradientQ")
-      //storage.save("q", q)
     }
 
     override protected def rewardSignal(output: Double): Double = {

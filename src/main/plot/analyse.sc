@@ -54,11 +54,12 @@ def bestBy(skip: Int, experimentName: String, index: Int): Any = {
             experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size) // average
           }
         )
-      
-      val totalAverageError = selectedIndicies.map(_.zipWithIndex).flatMap(_.map { case (k, v) => k}).reduce(_ + _)
+      val totalAverageError = selectedIndicies.flatten.reduce(_ + _) / selectedIndicies.size
+      val std = selectedIndicies.flatten
+        .reduce { (acc, data) => math.sqrt(math.pow(data - totalAverageError, 2)) } / selectedIndicies.size
       if(best > totalAverageError) {
         best = totalAverageError
-        println(s"New best ${dir}! ${totalAverageError}")
+        println(s"New best ${dir}! ${totalAverageError} +- ${std}")
       }
       val plotIndicies = experiments.indices.toList
     }
