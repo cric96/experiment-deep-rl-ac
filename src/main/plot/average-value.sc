@@ -1,11 +1,5 @@
-
-// Dependency
-import $ivy.`com.lihaoyi::os-lib:0.7.8`
-import $ivy.`com.github.tototoshi::scala-csv:1.3.8`
-import $ivy.`org.plotly-scala::plotly-render:0.8.1`
-import $ivy.`me.shadaj::scalapy-core:0.5.0`
-import $ivy.`com.lihaoyi::ammonite-ops:2.4.1`
-
+import $file.`deps`
+import $file.`Utils`
 // Proc
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
@@ -20,7 +14,7 @@ import scala.collection.Factory
 implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
 @main
-def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
+def averageByIndicies(skip: Int, experimentName: String, division: Int, indices: Int*): Any = {
   val workingDir = os.pwd / "data"
   val suddirs = os.list(workingDir).filter(os.isDir(_)).filterNot(_.wrapped.toAbsolutePath.toString.contains("img"))
   def createPlotsForExperiments(dir: os.Path): Unit = {
@@ -29,35 +23,14 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
 
     if(!os.exists(imageOutputDir)){ os.makeDir(imageOutputDir) }
 
-    val orderedExperiments = os.list(dir)
-      .filter(os.isFile)
-      .filter(_.toString().contains(experimentName))
-      .sortBy(file => {
-        val numberWithExtension = file.wrapped.toString.split("-").last
-        numberWithExtension.split("\\.").head.toDouble
-      })
+    val allExperimentFile = Utils.orderedExperiments(dir, experimentName)
+    val experiments = Utils.extractData(allExperimentFile).zipWithIndex.drop(skip)
 
-    val experiments = orderedExperiments
-      .map(file => file.wrapped.toAbsolutePath.toString)
-      .map(new File(_))
-      .map(CSVReader.open)
-      .map(_.all())
-      .map(file => file.filter(row => row.forall(!_.contains("#"))))
-      .drop(skip)
-
-    def process(): Unit = {
-      val selectedIndicies = experiments
-        .map(
-          experiment => experiment.map(row => select(row, indices:_*)).map(row => row.map(_.toDouble))
-        ).map(_.drop(1))
-        .map(
-          experiment => {
-            experiment.reduce((acc, data) => acc.zip(data).map { case (a, b) => a + b} ).map(data => data / experiment.size)
-          }
-        )
+    def process(experiments: Seq[Utils.RawExperiments], label: String = ""): Unit = {
+      val selectedIndicies = Utils.selectMeanUsingColumns(experiments, indices:_*)
+      val totalError = selectedIndicies.map(_.zipWithIndex)
+        .flatMap(_.map { case (k, v) => (v, k)}).groupMapReduce(_._1)(_._2)(_ + _)
       
-      val totalError = selectedIndicies.map(_.zipWithIndex).flatMap(_.map { case (k, v) => (v, k)}).groupMapReduce(_._1)(_._2)(_ + _)
-
       println(s"Stats: ${totalError}")
       val plotIndicies = experiments.indices.toList
       val plots = selectedIndicies
@@ -74,21 +47,26 @@ def averageByIndicies(skip: Int, experimentName: String, indices: Int*): Any = {
       plt.ylabel("average error")
       plt.xlabel("episodes")
       plt.title("training errors")
-      plt.savefig(s"$imageOutputDirPy/mean-error.png")
+      plt.savefig(s"$imageOutputDirPy/mean-error-${label}.pdf")
       plt.clf()
     }
     if(experiments.isEmpty) {
       println(s"Skip: ${dir}")
     } else {
       println(s"Process: ${dir}")
-      process()
+      process(experiments.map(_._1), "all") // all 
+      if(division > 0) {  
+        val (left, right) = experiments.partition { case (_, l) => (l / division) % 2 == 0 }
+        process(left.map(_._1), "left")
+        process(right.map(_._1), "right")
+      }
     }
   }
   createPlotsForExperiments(workingDir)
   suddirs.foreach(createPlotsForExperiments)
   "Ok"
 }
-// Utility function
-def select[A, F[a] <: Seq[a]](seq: F[A], indicies: Int*)(implicit factory: Factory[A, F[A]]): F[A] = {
-  seq.zipWithIndex.filter { case (_, i) => indicies.contains(i) }.map(_._1).to(factory)
+@main
+def averageAll(skip: Int, experimentName: String, indices: Int*): Any = {
+  averageByIndicies(skip, experimentName, -1, indices:_*)
 }
