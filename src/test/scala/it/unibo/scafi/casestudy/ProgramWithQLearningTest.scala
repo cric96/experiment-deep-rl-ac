@@ -12,8 +12,8 @@ import os.Path
 
 @RunWith(classOf[JUnitRunner])
 @SuppressWarnings(Array("org.wartremover.warts.Any")) // because of alchemist molecule management
-class HopCountQLearningTest extends AnyFlatSpec with should.Matchers {
-  val path: Path = os.pwd / "src" / "test" / "yaml" / "hopCount.yml"
+class ProgramWithQLearningTest extends AnyFlatSpec with should.Matchers {
+  val path: Path = os.pwd / "src" / "test" / "yaml" / "programCheck.yml"
 
   "HopCountQLearning" should "update q tables when learn" in {
     val engine = loadAlchemist[Any, GeoPosition](path)

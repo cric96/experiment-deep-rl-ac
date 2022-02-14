@@ -1,6 +1,5 @@
 package it.unibo.learning
 
-import it.unibo.learning.Q.QMap
 import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should

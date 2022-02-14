@@ -2,7 +2,8 @@ package it.unibo.scafi.casestudy
 
 import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist._
-import it.unibo.learning.{Episode, Q, QLearning, TimeVariable}
+import it.unibo.learning.{Q, QLearning}
+
 import scala.util.Random
 class AggregateProgramCheck
     extends AggregateProgram
@@ -17,16 +18,13 @@ class AggregateProgramCheck
   lazy val qLearning: QLearning.Type[Int, Int] = QLearning.Plain[Int, Int](actions, 0.1, 0.9)
   override def main(): Any = {
     val learningProblem = learningProcess(Q.zeros[Int, Int]())
-      .stateDefinition(a => a.toInt)
+      .stateDefinition((a, _) => a.toInt)
       .rewardDefinition(a => a) //fake reward
-      .actionEffectDefinition((out, a) => a) //for testing it return the action
+      .actionEffectDefinition((out, a, _) => a) //for testing it return the action
       .initialConditionDefinition(0, Double.PositiveInfinity)
     val (result, _) =
-      if (learn) {
-        learningProblem.step(qLearning, 0.1)
-      } else {
-        learningProblem.actGreedy(qLearning)
-      }
+      learningProblem.step(qLearning, 0.1, learn)
+
     node.put("q", result.q)
     node.put("output", result.output)
   }
