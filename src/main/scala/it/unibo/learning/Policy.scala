@@ -18,7 +18,7 @@ object Policy {
       case NonEmptyList(head, Nil)              => head
       case NonEmptyList(head, nextHead :: tail) => Stochastic.flip(head, randomFromList(NonEmptyList(nextHead, tail)))
     }
-    randomFromList(Reducible[NonEmptySet].toNonEmptyList(actions))
+    Stochastic.sampleUniformFrom(Reducible[NonEmptySet].toNonEmptyList(actions))
   }
 
   // the policy will choose always the action with the highest q value

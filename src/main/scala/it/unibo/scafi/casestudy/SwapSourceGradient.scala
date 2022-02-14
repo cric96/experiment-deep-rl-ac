@@ -4,11 +4,10 @@ import cats.data.NonEmptySet
 import it.unibo.alchemist.model.scafi.ScafiIncarnationForAlchemist.Metric
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL.{ConsiderNeighbourhood, Ignore}
-import it.unibo.scafi.casestudy.algorithm.hopcount.HopCountLearningAlgorithms
 
 import scala.collection.immutable.SortedSet
 
-class SwapSourceGradient extends HopCountLearningAlgorithms with SwapSourceLike with TemporalGradientRL {
+class SwapSourceGradient extends SwapSourceLike with TemporalGradientRL {
   // Constants
   val maxCrfValue = 5
   val gradientMetric: Metric = () => nbrRange()

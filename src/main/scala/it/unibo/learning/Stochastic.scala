@@ -17,4 +17,9 @@ object Stochastic {
     val prob = random.nextDouble()
     iterable.find(_._2 > prob).getOrElse(iterable.head)._1
   }
+  def sampleUniformFrom[A](iterable: NonEmptyList[A])(implicit random: Random): A = {
+    val index = random.nextInt(iterable.size)
+    iterable.toList(index)
+  }
+
 }
