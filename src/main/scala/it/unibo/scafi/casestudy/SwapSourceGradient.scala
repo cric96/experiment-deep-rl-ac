@@ -20,9 +20,9 @@ class SwapSourceGradient extends SwapSourceLike with TemporalGradientRL {
   @SuppressWarnings(Array("wartremover:Serializable"))
   val actions: List[TemporalGradientRL.Action] =
     List[TemporalGradientRL.Action](ConsiderNeighbourhood) ::: List[TemporalGradientRL.Action](
-      Ignore(crfRisingSpeed),
-      Ignore(crfRisingSpeed - 5)
-      /*Ignore(crfRisingSpeed + 10),
+      Ignore(crfRisingSpeed) /*,
+      Ignore(crfRisingSpeed - 5),
+      Ignore(crfRisingSpeed + 10),
       Ignore(crfRisingSpeed + 20),
       Ignore(crfRisingSpeed + 30)*/
     )

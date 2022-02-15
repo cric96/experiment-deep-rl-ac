@@ -35,7 +35,8 @@ trait GradientLikeLearning {
         epsilon: Double,
         learn: Boolean = false
     )(implicit rnd: Random): (RoundData[S, A, Double], Trajectory[S, A]) = {
-      val action = Policy.greedy(learning.actions)(ctx.initialCondition.state, ctx.q)
+      val greedy = Policy.greedy[S, A](learning.actions)
+      val action = greedy(ctx.initialCondition.state, ctx.q)
       val epsilonGreedy = Policy.epsilonGreedy[S, A](learning.actions, epsilon)
       val stateEvolution =
         HopCountState[S, A, learning.ops.Aux](
@@ -58,7 +59,11 @@ trait GradientLikeLearning {
         } {
           ev.target
         }
-        val nextAction = epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target))
+        val nextAction = branch(learn) {
+          epsilonGreedy(stateTPlus, learning.ops.extractQFromTarget(ev.target))
+        } {
+          greedy(stateTPlus, learning.ops.extractQFromTarget(ev.target))
+        }
         ev
           .focus(_.trajectory)
           .modify(trajectory => (ev.state, ev.action, reward) :: trajectory.toList)
