@@ -13,6 +13,40 @@ import scala.collection.Factory
 
 implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
+/*
+ * Return the time series of average error in each episode for a given index data.
+ * Alchemist experiment file are structured as:
+ * #######
+ * #######
+ * col_0     col_1     col_2  ...   col_n
+ * data_0_t0 data_1_t0 data_2_t0    data_n_t0
+ * data_0_t0 data_1_t0 data_2_t0    data_n_t0
+ * .....
+ * data_0_tT data_1_tT data_2_tT    data_n_tT
+ * where n are the total label extracted, and T is the simulation length.
+ * A simulation produces F files (one for each episode).
+ * This script, foreach each file, computes the average for a given index set.
+ * avg[index] = file[index].reduce(_ + _) / file[index].length
+ * where, file[index] produce a view of the file containing only the selected index.
+ * For a given index then, the script produces a line plot where x defines the experiment count:
+ * ^
+ * |
+ * |                      x
+ * |       x
+ * |  x        x  x
+ * |                  x              x
+ *  _ 0 _ 1 _ 2 _ 3 _ 4 _ 5 _ .... _ F
+ *
+ * the script should be executed in the same folder where the data/ folder (produced by alchemist) is placed (i.e in the project root).
+ * the plots are stored in [exp-folder]/img
+ * then, to run the script, you should type:
+ * amm src/plot/average-value.sc averageByIndicies --skip n --experimentName name --division d 0 1 2 [ ... ] <- the indices of interests
+ * @param skip the first skip experiment are not computed
+ * @param experimentName the name of the experiment
+ * @param division used because the experiment in two different configuration. So it tells the period of each environment
+ * @param indices what data (selected by index) should be plotted.
+ * @return Ok is the simulation goes well.
+ */
 @main
 def averageByIndicies(skip: Int, experimentName: String, division: Int, indices: Int*): Any = {
   val workingDir = os.pwd / "data"
@@ -41,7 +75,7 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
       
       // Python part
       val plt = py.module("matplotlib.pyplot")
-      py.module("matplotlib").rc("figure", figsize = (7, 2))
+      py.module("matplotlib")//.rc("figure", figsize = (7, 2))
       plots.foreach(plot => plt.plot(plot))
       //plt.show()
       plt.ylabel("average error")
@@ -66,6 +100,11 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
   suddirs.foreach(createPlotsForExperiments)
   "Ok"
 }
+
+/*
+ * Same as averageByIndicies, but we do not consider the environment division
+ * amm src/plot/average-value.sc averageAll --skip n --experimentName name 0 1 2 [ ... ] <- the indices of interests
+ */
 @main
 def averageAll(skip: Int, experimentName: String, indices: Int*): Any = {
   averageByIndicies(skip, experimentName, -1, indices:_*)
