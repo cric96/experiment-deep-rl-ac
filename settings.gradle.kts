@@ -21,4 +21,4 @@ buildscript {
     }
 }
 
-rootProject.name = "alpaca-2022-ac-rl"
+rootProject.name = "experiment-coordination-2022"

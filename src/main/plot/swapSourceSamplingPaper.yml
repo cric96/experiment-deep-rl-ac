@@ -27,10 +27,10 @@ the_plots_colors:
 legend_position:
   - "upper left"
   - "upper left"
-legend_size: 12
-force_limit_plot_y:
-start_plot_x:
-force_limit_plot_x:
+legend_size: 14
+y_labels:
+  - "average output"
+  - "average error"
 sampling:
   - True
 samplingField:

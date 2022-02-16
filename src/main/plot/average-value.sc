@@ -10,9 +10,18 @@ import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.SeqConverters
 import java.io.File
 import scala.collection.Factory
-
+import py.PyQuote
 implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
+case class Index(index: Int, label: Option[String] = None)
+def processRawString(indices: String*): Seq[Index] = {
+  val regex = raw"([0-9]+):(\w+)".r
+  val onlyNumber = raw"([0-9]+)".r
+  indices.collect { 
+    case regex(number, label) => Index(number.toInt, Some(label))
+    case onlyNumber(number) => Index(number.toInt)
+  }
+}
 /*
  * Return the time series of average error in each episode for a given index data.
  * Alchemist experiment file are structured as:
@@ -41,6 +50,9 @@ implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' '
  * the plots are stored in [exp-folder]/img
  * then, to run the script, you should type:
  * amm src/plot/average-value.sc averageByIndicies --skip n --experimentName name --division d 0 1 2 [ ... ] <- the indices of interests
+ * the indicies could be express as:
+   - numbers => 1 2 3 
+   - number:label => 1:name 2:name 3:name 
  * @param skip the first skip experiment are not computed
  * @param experimentName the name of the experiment
  * @param division used because the experiment in two different configuration. So it tells the period of each environment
@@ -48,7 +60,9 @@ implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' '
  * @return Ok is the simulation goes well.
  */
 @main
-def averageByIndicies(skip: Int, experimentName: String, division: Int, indices: Int*): Any = {
+def averageByIndicies(skip: Int, experimentName: String, division: Int, indices: String*): Any = {
+  val indicesParsed = processRawString(indices:_*)
+  val selectionColumn = indicesParsed.map(_.index)
   val workingDir = os.pwd / "data"
   val suddirs = os.list(workingDir).filter(os.isDir(_)).filterNot(_.wrapped.toAbsolutePath.toString.contains("img"))
   def createPlotsForExperiments(dir: os.Path): Unit = {
@@ -61,26 +75,28 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
     val experiments = Utils.extractData(allExperimentFile).zipWithIndex.drop(skip)
 
     def process(experiments: Seq[Utils.RawExperiments], label: String = ""): Unit = {
-      val selectedIndicies = Utils.selectMeanUsingColumns(experiments, indices:_*)
+      val selectedIndicies = Utils.selectMeanUsingColumns(experiments, selectionColumn:_*)
       val totalError = selectedIndicies.map(_.zipWithIndex)
         .flatMap(_.map { case (k, v) => (v, k)}).groupMapReduce(_._1)(_._2)(_ + _)
       
       println(s"Stats: ${totalError}")
-      val plotIndicies = experiments.indices.toList
+      
+      val labels: Seq[String] = indicesParsed.map { case Index(i, label) => label.getOrElse(i.toString()) }
       val plots = selectedIndicies
         .map(element => element.map(List(_)))
         .reduce((acc, data) => acc.zip(data).map { case (acc, data) => acc ::: data})
         .map(_.toPythonCopy)
-        .toSeq
+        .toSeq.zip(labels)
       
       // Python part
       val plt = py.module("matplotlib.pyplot")
-      py.module("matplotlib")//.rc("figure", figsize = (7, 2))
-      plots.foreach(plot => plt.plot(plot))
+      plt.rcParams.update(py"{'font.size': 14}")
+      plots.foreach { case (plot, label) => plt.plot(plot, label=label) }
       //plt.show()
       plt.ylabel("average error")
       plt.xlabel("episodes")
       plt.title("training errors")
+      plt.legend()
       plt.savefig(s"$imageOutputDirPy/mean-error-${label}.pdf")
       plt.clf()
     }
@@ -106,6 +122,6 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
  * amm src/plot/average-value.sc averageAll --skip n --experimentName name 0 1 2 [ ... ] <- the indices of interests
  */
 @main
-def averageAll(skip: Int, experimentName: String, indices: Int*): Any = {
+def averageAll(skip: Int, experimentName: String, indices: String*): Any = {
   averageByIndicies(skip, experimentName, -1, indices:_*)
 }

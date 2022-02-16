@@ -13,6 +13,7 @@ import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.SeqConverters
 import java.io.File
 import scala.collection.Factory
+import py.PyQuote
 
 implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
@@ -100,6 +101,7 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
   // Python part
   val plt = py.module("matplotlib.pyplot")
   py.module("matplotlib")//.rc("figure", figsize = (7, 2))
+  plt.rcParams.update(py"{'font.size': 14}")
   def produceBoxPlots(label: String, elements: Seq[((os.Path, _, _, Seq[Double]), _)]): Unit = {
     val boxPlot = elements.map { case ((_, _, _, data), _) => data.toPythonCopy }.toPythonCopy
     val ticks = elements.map { case ((dir, _, _, _), _) => s"${dir.baseName}" }
@@ -109,7 +111,7 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
     plt.title(s"${label}: box plots")
     os.makeDir.all(os.pwd / "analyse")
     plt.savefig(s"analyse/${label}.pdf")
-    plt.show()
+    //plt.show()
     plt.clf()
   }
   produceBoxPlots("best", bestResult)
