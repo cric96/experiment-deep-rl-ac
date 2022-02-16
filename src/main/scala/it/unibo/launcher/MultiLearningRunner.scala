@@ -16,6 +16,28 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava, SeqHasAsJava}
 
+/** Main used to run multiple simulation with reinforcement learning. It could be configured using a file or via main
+  * args. The file should be structured as: ["key", "value", "key-2", "value-2", "key-3", "value-3"] The accepted key
+  * are: "greedyEpisodes", "10", "gamma", "[0.9]", "alphaBeta", "[[0.5,0.01]]", "epsilonCombination",
+  * "[[0.5,50],[0.01,40]]", "bucketsMax", "[[32,4]]"]
+  *   - program: with the base alchemist configuration file. e.g "program", "test.yaml"
+  *   - learningEpisodes: how many episodes are used to train the Q table?. e.g "learningEpisodes", "100"
+  *   - greedyEpisodes: in how many episodes the agent follow a greedy policy? e.g. "greedyEpisodes", "10"
+  *   - gamma: value for Q learning. e.g "gamma", [0.9, 0.1] ==> accept an array of double
+  *   - alphaBeta: value to tune Hysteric Q learning. e.g. "alphaBeta", "[[0.5, 0.1], [0.1, 0.01]]" ==> accept an array
+  *     of tuple
+  *   - epsilonCombination: value to rule the epsilon decay. e.g. "epislonCombination", "[[0.5, 50]]" ==> accept an
+  *     array of tuple. each tuple expresses [epsilon_0, decay factor]
+  *   - bucketsMax: used to tune the discretisation process. "bucketsMax", "[[32, 4]]" ==> accept an array of tuple.
+  *     each tuple expresses: [buckets, radiusMultiplier]
+  *
+  * This will launch |alphaBeta| * |gamma| * |epsilonCombination| * |bucketsMax| simulations
+  *
+  * An example of that file is in launch.txt.
+  *
+  * If you use gradle, you can launch these simulation with: ./gradlew startMultipleLearning -PXfile="launch.txt" If you
+  * launch this application using java, the argument should be passed as: name value
+  */
 @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
 object MultiLearningRunner extends App {
   LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).as[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
