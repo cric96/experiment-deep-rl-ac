@@ -29,7 +29,7 @@ object MultiLearningRunner extends App {
   }
   private val yaml = new Yaml()
   private val baseFolder = "src/main/yaml/"
-  private val experimentName = findInArgs("program").getOrElse("swapSourceGradientRectangleVariable.yml")
+  private val experimentName = findInArgs("program").getOrElse("swapSourceGradientMultiEnvironment.yml")
   private val startingFile = s"$baseFolder$experimentName"
   val dir = os.temp.dir(prefix = "simulations")
   val gamma = findInArgs("gamma").map(read[List[Double]](_)).getOrElse(List(0.9, 0.5, 0.99))

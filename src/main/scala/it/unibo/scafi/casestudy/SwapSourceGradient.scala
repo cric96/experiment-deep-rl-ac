@@ -56,17 +56,14 @@ class SwapSourceGradient extends SwapSourceLike with TemporalGradientRL {
     val progression = processAlgorithms(shouldLearn, eps)
     //// STATE OF THE ART
     val crf = crfGradient(crfRisingSpeed)(source = source, gradientMetric)
-    val bis = bisGradient(radius)(source, gradientMetric)
     //// DATA STORAGE
     /// OUTPUT
     node.put("output_classicHopCount", classic)
     node.put("output_reference", referenceGradient)
     node.put("output_crf", crf)
-    node.put("output_bis", bis)
     /// ERROR
     node.put("err_classicHopCount", outputEvaluation(referenceGradient, classic))
     node.put(s"err_crf", outputEvaluation(referenceGradient, crf))
-    node.put(s"err_bis", outputEvaluation(referenceGradient, bis))
     /// MISCELLANEOUS
     node.put(s"passed_time", passedTime())
     node.put("src", source)

@@ -2,7 +2,7 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 2.0 }
+  last_greedy_episodes: { formula: 5.0 }
   learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
@@ -86,16 +86,8 @@ deployments:
         concentration: 0
       - molecule: output_crf
         concentration: 0
-      - molecule: output_bis
-        concentration: 0
       #### RL OUTPUT
       - molecule: output_temporalRL
-        concentration: 0
-      - molecule: output_crfLikeRL
-        concentration: 0
-      - molecule: output_crfLikeWithActionRL
-        concentration: 0
-      - molecule: output_deepRL
         concentration: 0
       #### ERROR
       - molecule: err_classicHopCount
@@ -103,78 +95,38 @@ deployments:
       #### RL ERROR
       - molecule: err_temporalRL
         concentration: 0
-      - molecule: err_crfLikeRL
-        concentration: 0
-      - molecule: err_crfLikeWithActionRL
-        concentration: 0
-      - molecule: err_deepRL
-        concentration: 0
       #### STATE OF THE ART ERRORS
       - molecule: err_crf
-        concentration: 0
-      - molecule: err_bis
         concentration: 0
 export:
   - type: CSVExporter
     parameters: [ "gradientExperiments", 1.0, "./data" ]
     data:
-    - time
-    - molecule: output_reference
-      aggregators: [mean]
-      value-filter: onlyfinite
+      - time
+      - molecule: output_reference
+        aggregators: [mean]
+        value-filter: onlyfinite
 
-    - molecule: output_classicHopCount
-      aggregators: [mean]
-      value-filter: onlyfinite
+      - molecule: output_classicHopCount
+        aggregators: [mean]
+        value-filter: onlyfinite
 
-    - molecule: output_bis
-      aggregators: [ mean ]
-      value-filter: onlyfinite
+      - molecule: output_crf
+        aggregators: [mean]
+        value-filter: onlyfinite
 
-    - molecule: output_crf
-      aggregators: [mean]
-      value-filter: onlyfinite
+      - molecule: output_temporalRL
+        aggregators: [mean]
+        value-filter: onlyfinite
 
-    - molecule: output_temporalRL
-      aggregators: [mean]
-      value-filter: onlyfinite
+      - molecule: err_classicHopCount
+        aggregators: [sum]
+        value-filter: onlyfinite
 
-    - molecule: output_crfLikeRL
-      aggregators: [mean]
-      value-filter: onlyfinite
+      - molecule: err_temporalRL
+        aggregators: [sum]
+        value-filter: onlyfinite
 
-    - molecule: output_crfLikeWithActionRL
-      aggregators: [mean]
-      value-filter: onlyfinite
-
-    - molecule: output_deepRL
-      aggregators: [ mean ]
-      value-filter: onlyfinite
-
-    - molecule: err_classicHopCount
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_temporalRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_crfLikeRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_crfLikeWithActionRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_deepRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_crf
-      value-filter: onlyfinite
-      aggregators: [sum]
-
-    - molecule: err_bis
-      value-filter: onlyfinite
-      aggregators: [sum]
+      - molecule: err_crf
+        value-filter: onlyfinite
+        aggregators: [sum]

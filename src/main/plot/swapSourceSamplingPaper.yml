@@ -1,27 +1,18 @@
 the_plots_labels:
   - Time                 #0
-  - 'mean optimal'
-  - 'mean classic'
-  - 'mean bis'
-  - 'mean CRF'
-  - 'mean RL'
-  - '_'
-  - '_'
-  - '_'
-  - 'error Classic'
-  - 'error RL'
-  - '_'
-  - '_'
-  - '_'
-  - 'error CRF'
-  - 'error CRF'
+  - 'mean optimal'       #1
+  - 'mean classic'       #2
+  - 'mean CRF'           #3
+  - 'mean RL'            #4
+  - 'error Classic'      #5
+  - 'error RL'           #6
+  - 'error CRF'          #7
 the_plots_formats:
-  - [0, 1, 2, 4, 5]
-  - [0, 9, 10, 14]
+  - [0, 1, 2, 3, 4] ### plot of average output for each time step. CRF and RL should have a higher output than classic
+  - [0, 5, 6, 7]  ### plot of average error for each time step. CRF and RL should have a lower output than the classic
 line_widths:
   - [ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ]
-default_colors: &default_colors ["black", "red", "teal", "_", "darkgreen", "gold",
-                                 "_", "_", "_", "teal", "gold", "_", "_", "_", "darkgreen"]
+default_colors: &default_colors ["black", "red", "teal", "darkgreen", "gold", "teal", "gold", "darkgreen"]
 the_plots_colors:
   - *default_colors
 legend_position:
@@ -43,6 +34,5 @@ excluded_titles:
   - [0]
   - [0]
 line_styles:
-  - ['solid', 'dashed', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
-     'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid']
+  - ['solid', 'dashed', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid']
 format: "pdf"

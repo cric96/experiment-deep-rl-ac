@@ -23,6 +23,16 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+/*
+  The script used to produce the plot showed in the paper.
+  It calls:
+  - analyse.sc to get the best configuration
+  - divide.sc to prepare the folder in order to plot the best result
+  - average.value to get the traininig curve
+  Finally, it takes the best simulation process (from analyse) and produce the output and error plot
+  (using plotter.py and swapSourceSamplingPaper).
+  skip: used to tell the first experiment in wich the system learns.
+ */
 @main
 def main(skip: Int) {
   Logger.log = false // other scripts do not produce logs
@@ -32,34 +42,30 @@ def main(skip: Int) {
   val name = "gradientExperiments"
   val pythonPlotConfig = "src/main/plot/swapSourceSamplingPaper.yml"
   val jumpFirst = 10
-  val rl = 10
+  val rl = 7
   val show = 3
   val division = 6
   def moveTo(ref: Path, to: Path) = os.move(ref, to, replaceExisting = true, createFolders = true)
   def copyTo(ref: Path, to: Path) = os.copy(ref, to, replaceExisting = true)
   
-  val analyseRest = Future {
-    println("analysis starts...")
-    val best = analyse.bestBy(skip, name, rl, show, division, "all")
-    moveTo(currentFolder / "analyse", result / "analyse-all")
-    analyse.bestBy(skip, name, rl, show, division, "right")
-    moveTo(currentFolder / "analyse", result / "analyse-right")
-    analyse.bestBy(skip, name, rl, show, division, "left")
-    moveTo(currentFolder / "analyse", result / "analyse-left")  
-    println("analysis ends..")
-    best
-  }
-  val average = Future {
-    println("average starts..")
-    `average-value`.averageByIndicies(jumpFirst, name, 6, "9:classic", "10:RL", "14:CRF")
-    println("average ends..")
-  }
-  val divide = Future {
-    println("divide starts..")
-    `divide-by`.divideBy(name, division)
-    println("divide ends..")
-  }
-  val best = Await.result(average.flatMap(_ => analyseRest), Duration.Inf)
+  println("analysis starts...")
+  val best = analyse.bestBy(skip, name, rl, show, division, "all")
+  moveTo(currentFolder / "analyse", result / "analyse-all")
+  analyse.bestBy(skip, name, rl, show, division, "right")
+  moveTo(currentFolder / "analyse", result / "analyse-right")
+  analyse.bestBy(skip, name, rl, show, division, "left")
+  moveTo(currentFolder / "analyse", result / "analyse-left")
+  println("analysis ends..")
+  best
+
+  println("average starts..")
+  `average-value`.averageByIndicies(jumpFirst, name, 6, "5:classic", "6:RL", "7:CRF")
+  println("average ends..")
+
+  println("divide starts..")
+  `divide-by`.divideBy(name, division)
+  println("divide ends..")
+
   val tmp = os.pwd / "temp"
   os.makeDir.all(tmp)
   val bestExp = currentFolder / "data" / best

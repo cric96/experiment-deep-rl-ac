@@ -2,8 +2,8 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 10.0 }
-  learning_episodes: { formula: 500.0 }
+  last_greedy_episodes: { formula: 5.0 }
+  learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
   episode: &episode { min: 0, max: *episodes, step: 1, default: 0 }
@@ -34,13 +34,13 @@ _beta: &beta
 _epsilon: &epsilon
   it.unibo.learning.TimeVariable.exponentialDecayFunction(0.01, 1000)
 
-seeds: { scenario: 0, simulation: 0 } # put episode to make round firing different
+seeds: { scenario: *episode, simulation: *episode } # put episode to make round firing different
 terminate: { type: AfterTime, parameters: [*episode_length] }
 environment: { type: Continuous2DEnvironment }
 network-model: { type: ConnectWithinDistance, parameters: [*range] }
 deployments:
   - type: Grid
-    parameters: [0, 0, 100, 20, 5, 5, 0.5, 0.5, 0.0, 0.0] #large
+    parameters: [0, 0, 100, 5, 5, 5, 0.5, 0.5, 0.0, 0.0] #large
     programs:
       - time-distribution: 1
         type: Event
@@ -85,16 +85,8 @@ deployments:
         concentration: 0
       - molecule: output_crf
         concentration: 0
-      - molecule: output_bis
-        concentration: 0
       #### RL OUTPUT
       - molecule: output_temporalRL
-        concentration: 0
-      - molecule: output_crfLikeRL
-        concentration: 0
-      - molecule: output_crfLikeWithActionRL
-        concentration: 0
-      - molecule: output_deepRL
         concentration: 0
       #### ERROR
       - molecule: err_classicHopCount
@@ -102,16 +94,8 @@ deployments:
       #### RL ERROR
       - molecule: err_temporalRL
         concentration: 0
-      - molecule: err_crfLikeRL
-        concentration: 0
-      - molecule: err_crfLikeWithActionRL
-        concentration: 0
-      - molecule: err_deepRL
-        concentration: 0
       #### STATE OF THE ART ERRORS
       - molecule: err_crf
-        concentration: 0
-      - molecule: err_bis
         concentration: 0
 export:
   - type: CSVExporter
@@ -126,28 +110,12 @@ export:
       aggregators: [mean]
       value-filter: onlyfinite
 
-    - molecule: output_bis
-      aggregators: [ mean ]
-      value-filter: onlyfinite
-
     - molecule: output_crf
       aggregators: [mean]
       value-filter: onlyfinite
 
     - molecule: output_temporalRL
       aggregators: [mean]
-      value-filter: onlyfinite
-
-    - molecule: output_crfLikeRL
-      aggregators: [mean]
-      value-filter: onlyfinite
-
-    - molecule: output_crfLikeWithActionRL
-      aggregators: [mean]
-      value-filter: onlyfinite
-
-    - molecule: output_deepRL
-      aggregators: [ mean ]
       value-filter: onlyfinite
 
     - molecule: err_classicHopCount
@@ -158,22 +126,6 @@ export:
       aggregators: [sum]
       value-filter: onlyfinite
 
-    - molecule: err_crfLikeRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_crfLikeWithActionRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
-    - molecule: err_deepRL
-      aggregators: [sum]
-      value-filter: onlyfinite
-
     - molecule: err_crf
-      value-filter: onlyfinite
-      aggregators: [sum]
-
-    - molecule: err_bis
       value-filter: onlyfinite
       aggregators: [sum]
