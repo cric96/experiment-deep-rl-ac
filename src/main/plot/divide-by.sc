@@ -18,7 +18,7 @@ def divideBy(experimentName: String, division: Int): Any = {
   val workingDir = os.pwd / "data"
   val suddirs = os.list(workingDir).filter(os.isDir(_)).filterNot(_.wrapped.toAbsolutePath.toString.contains("img"))
   def eval(dir: os.Path): Unit = {
-    println(s"processing ${dir}")
+    Logger.println(s"Divide ${dir}")
     val orderedExperiments = os.list(dir)
       .filter(os.isFile)
       .filter(_.toString().contains(experimentName))

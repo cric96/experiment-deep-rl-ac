@@ -1,5 +1,6 @@
 import $file.`deps`
 import $file.`Utils`
+import $file.`Logger`
 // Proc
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
@@ -79,7 +80,7 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
       val totalError = selectedIndicies.map(_.zipWithIndex)
         .flatMap(_.map { case (k, v) => (v, k)}).groupMapReduce(_._1)(_._2)(_ + _)
       
-      println(s"Stats: ${totalError}")
+      Logger.println(s"Stats: ${totalError}")
       
       val labels: Seq[String] = indicesParsed.map { case Index(i, label) => label.getOrElse(i.toString()) }
       val plots = selectedIndicies
@@ -101,9 +102,9 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
       plt.clf()
     }
     if(experiments.isEmpty) {
-      println(s"Skip: ${dir}")
+      Logger.println(s"Skip: ${dir}")
     } else {
-      println(s"Process: ${dir}")
+      Logger.println(s"Process: ${dir}")
       process(experiments.map(_._1), "all") // all 
       if(division > 0) {  
         val (left, right) = experiments.partition { case (_, l) => (l / division) % 2 == 0 }

@@ -2,6 +2,7 @@
 // Dependency
 import $file.`deps`
 import $file.`Utils`
+import $file.`Logger`
 // Proc
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
@@ -14,6 +15,7 @@ import me.shadaj.scalapy.py.SeqConverters
 import java.io.File
 import scala.collection.Factory
 import py.PyQuote
+// mini logger
 
 implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
 
@@ -65,15 +67,15 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
 
       if(best > totalAverageError) {
         best = totalAverageError
-        println(s"New best ${dir}! ${totalAverageError} +- ${std}")
+        Logger.println(s"New best ${dir}! ${totalAverageError} +- ${std}")
       }
       (dir, totalAverageError, std, allData)
     }
     if(experiments.isEmpty) {
-      println(s"Skip: ${dir}")
+      Logger.println(s"Skip: ${dir}")
       None
     } else {
-      println(s"Process: ${dir}")
+      Logger.println(s"Process: ${dir}")
       Some(process())
     }
   }
@@ -81,9 +83,9 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
     .map(eval)
     .collect { case (Some(data)) => data }
     .sortBy { case (_, mean, std, _) => (mean, std) }
-  println("---- Analytics ----")
+  Logger.println("---- Analytics ----")
   def analytics(elements: Seq[((os.Path, Double, Double, _), Int)]) = elements.foreach {
-    case ((path, mean, std, _), i) => println(s"${i + 1}° ==> ${path.baseName}; ${mean} +- ${std}")
+    case ((path, mean, std, _), i) => Logger.println(s"${i + 1}° ==> ${path.baseName}; ${mean} +- ${std}")
   }
   val zipped = sortedResults.zipWithIndex
   val bestResult = zipped.take(show)
@@ -91,11 +93,11 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
   val median = sortedResults.size / 2
   val medianStart = median - show / 2
   val medianResult = zipped.drop(medianStart).take(show)
-  println("Best")
+  Logger.println("Best")
   analytics(bestResult)
-  println("Worst")
+  Logger.println("Worst")
   analytics(worstResult)
-  println("Average")
+  Logger.println("Average")
   analytics(medianResult)
   
   // Python part
