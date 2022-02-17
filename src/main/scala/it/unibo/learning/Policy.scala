@@ -13,13 +13,8 @@ object Policy {
   type QBased[S, A] = Type[S, Q[S, A], A]
 
   // explorative policy.
-  def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _) => {
-    def randomFromList(actions: NonEmptyList[A]): A = actions match {
-      case NonEmptyList(head, Nil)              => head
-      case NonEmptyList(head, nextHead :: tail) => Stochastic.flip(head, randomFromList(NonEmptyList(nextHead, tail)))
-    }
+  def random[S, A](actions: NonEmptySet[A])(implicit rnd: Random): QBased[S, A] = (_, _) =>
     Stochastic.sampleUniformFrom(Reducible[NonEmptySet].toNonEmptyList(actions))
-  }
 
   // the policy will choose always the action with the highest q value
   def greedy[S, A](actions: NonEmptySet[A]): QBased[S, A] = (state, q) => {

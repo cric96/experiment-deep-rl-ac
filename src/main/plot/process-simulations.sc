@@ -42,7 +42,7 @@ def main(skip: Int) {
   val name = "gradientExperiments"
   val pythonPlotConfig = "src/main/plot/swapSourceSamplingPaper.yml"
   val jumpFirst = 10
-  val rl = 7
+  val rl = 6
   val show = 3
   val division = 6
   def moveTo(ref: Path, to: Path) = os.move(ref, to, replaceExisting = true, createFolders = true)
