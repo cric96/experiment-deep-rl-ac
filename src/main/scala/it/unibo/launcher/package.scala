@@ -2,6 +2,10 @@ package it.unibo
 
 import java.{util => jutil}
 package object launcher {
+  /** an unsafe type enrichment used in multi learning to simplify the access to jaav world
+    * @param a
+    *   the object enriched
+    */
   @SuppressWarnings(Array("org.wartremover.warts.All")) //because we have to deal with java world
   implicit class Unsafe(a: Any) {
     def as[T]: T = a.asInstanceOf[T]

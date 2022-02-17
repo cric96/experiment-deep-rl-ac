@@ -11,8 +11,10 @@ import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.SeqConverters
 import java.io.File
 
-implicit object MyFormat extends DefaultCSVFormat { override val delimiter = ' ' }
+/*
+ * Divide the experiements in two subexperimennt -- used for multi environments configuration.
 
+ */
 @main
 def divideBy(experimentName: String, division: Int): Any = {
   val workingDir = os.pwd / "data"
