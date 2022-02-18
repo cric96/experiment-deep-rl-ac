@@ -10,10 +10,8 @@ import com.github.tototoshi.csv._
 import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.SeqConverters
 import java.io.File
-
 /*
- * Divide the experiements in two subexperimennt -- used for multi environments configuration.
-
+ * Divide the experiments in two sub-experiment -- used for multi environments configuration.
  */
 @main
 def divideBy(experimentName: String, division: Int): Any = {

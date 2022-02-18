@@ -91,11 +91,13 @@ trait TemporalGradientRL extends RLLike {
 
     override def episodeEnd(nodes: Iterable[NodeManager]): Unit = {
       Logging().warn(":::::CHECK GREEDY POLICY:::::")
-      val policy = Policy.greedy[History, Action](actionSet)
       q match {
         case MutableQ(initialConfig) =>
           val states = initialConfig.keys.map(_._1)
           Logging().warn(s"STATE VISITED: ${states.size.toString}")
+      }
+      if (node.has("simulation_id")) {
+        storage.save(node.get("simulation_id"), q)
       }
     }
 
@@ -127,7 +129,7 @@ object TemporalGradientRL {
     }
   case class Ignore(upVelocity: Double) extends Action
   case object ConsiderNeighbourhood extends Action
-  val storage = new LocalStorage[String]("gradientQ")
+  val storage = new LocalStorage[String]("table")
   val q: MutableQ[History, Action] = new MutableQ[History, Action](Map.empty.withDefault(_ => 0.0))
   //new MutableQ(
   //  storage.load[MutableQ[History, Action]]("q").initialConfig.withDefault(_ => 0.0)

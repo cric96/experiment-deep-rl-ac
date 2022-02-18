@@ -1,0 +1,1 @@
+["useFile", "true", "program", "swapSourceGradientRectangleTest.yml", "learningEpisodes", "0", "greedyEpisodes", "10", "gamma", "[0.0]", "alphaBeta", "[[0.0,0.0]]", "epsilonCombination", "[[0.0,0]]", "bucketsMax", "[[32,4]]"]

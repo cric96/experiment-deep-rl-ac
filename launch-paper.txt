@@ -1,1 +1,0 @@
-["program", "swapSourceGradientMultiEnvironment.yml", "learningEpisodes", "40", "greedyEpisodes", "10", "gamma", "[0.9]", "alphaBeta", "[[0.5,0.01]]", "epsilonCombination", "[[0.5,50],[0.01,40]]", "bucketsMax", "[[32,4]]"]

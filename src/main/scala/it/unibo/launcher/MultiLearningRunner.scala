@@ -6,6 +6,7 @@ import it.unibo.alchemist.Alchemist
 import it.unibo.learning.Q.MutableQ
 import it.unibo.scafi.casestudy.GlobalStore
 import it.unibo.scafi.casestudy.algorithm.gradient.TemporalGradientRL.{Action, History}
+import it.unibo.storage.LocalStorage
 import org.slf4j.LoggerFactory
 import org.yaml.snakeyaml.Yaml
 import upickle.default.read
@@ -30,6 +31,8 @@ import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava, SeqHa
   *     array of tuple. each tuple expresses [epsilon_0, decay factor]
   *   - bucketsMax: used to tune the discretisation process. "bucketsMax", "[[32, 4]]" ==> accept an array of tuple.
   *     each tuple expresses: [buckets, radiusMultiplier]
+  *     - useFile: it is used to load the Q table from file or not. The q table file should have the same simulation id
+  *       of the current simulation
   *
   * This will launch |alphaBeta| * |gamma| * |epsilonCombination| * |bucketsMax| simulations
   *
@@ -49,6 +52,7 @@ object MultiLearningRunner extends App {
       ArraySeq.unsafeWrapArray(args)
     }
   }
+  private val storage = new LocalStorage[String]("table")
   private val yaml = new Yaml()
   private val baseFolder = "src/main/yaml/"
   private val experimentName = findInArgs("program").getOrElse("swapSourceGradientMultiEnvironment.yml")
@@ -110,7 +114,11 @@ object MultiLearningRunner extends App {
     )
     val file = dir / s"sim-$suffix-$suffixNumber.yml"
     os.write.over(file, yaml.dump(base))
-    GlobalStore.store(suffixNumber, new MutableQ[History, Action](Map.empty.withDefault(_ => 0.0)))
+    findInArgs("useFile") match {
+      case Some("true") =>
+        GlobalStore.store(suffixNumber, storage.load[MutableQ[History, Action]](suffixNumber).withDefault(0.0))
+      case _ => GlobalStore.store(suffixNumber, new MutableQ[History, Action](Map.empty.withDefault(_ => 0.0)))
+    }
     file
   }
 

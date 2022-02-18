@@ -27,9 +27,9 @@ RL algorithms and abstraction are developed in the [it.unibo.learning](src/main/
 
 ### Commands
 
-`./gradlew startMultipleLearning -PXfile="launch.txt"`
+`./gradlew startMultipleLearning -PXfile="launch-learning-paper.txt"`
 
-To reproduce the same data of the paper, use [launch-paper](launch-paper.txt).
+To reproduce the same data of the paper, use [launch-paper](launch-learning-paper.txt).
 The description of launch.txt could be found at [MultiLearningRunner](src/main/scala/it/unibo/launcher/MultiLearningRunner.scala).
 The data are stored in data/
 ### Plots
@@ -43,5 +43,5 @@ This will produce the plots showed in the article. The images are stored in resu
     - `episode` var ranges over [0..N..N+K] episodes where last K episodes are greedy
     - each 6 episode, the environment change from a line to a grid of nodes (40 nodes vs 200)
 - Program: [`it.unibo.scafi.casestudy.SwapSourceGradient`](src/main/scala/it/unibo/scafi/casestudy/SwapSourceGradient.scala)
-- Running: `./gradlew startMultipleLearning -PXfile="launch.txt"`
+- Running: `./gradlew startMultipleLearning -PXfile="launch-learning-paper.txt"`
 - Plotting: `./src/main/plot/plotter.py src/main/plot/swapSourceSampling.yml data/ gradient.* myplot`
