@@ -110,7 +110,7 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
     plt.boxplot(boxPlot, notch=true, showmeans=true, labels = ticks.toPythonCopy)
     plt.ylabel("episode error")
     plt.xlabel("configuration")
-    plt.title(s"${label}: box plots")
+    //plt.title(s"${label}: box plots")
     os.makeDir.all(os.pwd / "analyse")
     plt.tight_layout()
     plt.savefig(s"analyse/${label}.pdf", bbox_inches="tight", pad_inches = 0)
