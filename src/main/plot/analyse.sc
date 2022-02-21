@@ -112,7 +112,8 @@ def bestBy(skip: Int, experimentName: String, index: Int, show: Int = 3, divisio
     plt.xlabel("configuration")
     plt.title(s"${label}: box plots")
     os.makeDir.all(os.pwd / "analyse")
-    plt.savefig(s"analyse/${label}.pdf")
+    plt.tight_layout()
+    plt.savefig(s"analyse/${label}.pdf", bbox_inches="tight", pad_inches = 0)
     //plt.show()
     plt.clf()
   }

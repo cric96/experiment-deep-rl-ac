@@ -96,9 +96,10 @@ def averageByIndicies(skip: Int, experimentName: String, division: Int, indices:
       //plt.show()
       plt.ylabel("average error")
       plt.xlabel("episodes")
-      plt.title("training errors")
+      //plt.title("training errors")
       plt.legend()
-      plt.savefig(s"$imageOutputDirPy/mean-error-${label}.pdf")
+      plt.tight_layout()
+      plt.savefig(s"$imageOutputDirPy/mean-error-${label}.pdf", bbox_inches="tight", pad_inches = 0)
       plt.clf()
     }
     if(experiments.isEmpty) {
