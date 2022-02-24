@@ -36,14 +36,6 @@ variables:
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
 
-## Time variables
-_alpha: &alpha
-  it.unibo.learning.TimeVariable.independent(0.1)
-_beta: &beta
-  it.unibo.learning.TimeVariable.independent(0.01)
-_epsilon: &epsilon
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.01, 1000)
-
 seeds: { scenario: *episode, simulation: *episode } # put episode to make round firing different
 terminate: { type: AfterTime, parameters: [*episode_length] }
 environment: { type: Continuous2DEnvironment }
@@ -68,16 +60,8 @@ deployments:
         concentration: *stop_right_source
       - molecule: gamma
         concentration: *gamma
-      - molecule: alpha
-        concentration: *alpha
-      - molecule: beta
-        concentration: *beta
-      - molecule: epsilon
-        concentration: *epsilon
       - molecule: window
         concentration: *window_size
-      - molecule: trajectory
-        concentration: *trajectory_size
       - molecule: left_source
         concentration: *left_source
       - molecule: right_source

@@ -2,7 +2,7 @@ incarnation: scafi
 
 variables:
   # SIMULATION VARIABLE
-  last_greedy_episodes: { formula: 5.0 }
+  last_greedy_episodes: { formula: 10.0 }
   learning_episodes: { formula: 100.0 }
   episodes: &episodes { formula: 'learning_episodes + last_greedy_episodes' }
   greedy_each: { formula: learning_episodes }
@@ -19,18 +19,10 @@ variables:
   gamma: &gamma { formula: 0.90 }
   window_size: &window_size { formula: 2 } ## probably better with windows_size = 3
   trajectory_size: &trajectory_size { formula: 2 }
-  right_source: &right_source { formula: 'episode % 2 == 0 ? 60 : 19'}
-  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 60' }
+  right_source: &right_source { formula: 'episode % 2 == 0 ? 60 : 60'}
+  left_source: &left_source { formula: 'episode % 2 == 0 ? 19 : 19' }
   # PROGRAM VARIABLES
   stop_right_source: &stop_right_source { formula: 35 }
-
-## Time variables
-_alpha: &alpha
-  it.unibo.learning.TimeVariable.independent(0.1)
-_beta: &beta
-  it.unibo.learning.TimeVariable.independent(0.01)
-_epsilon: &epsilon
-  it.unibo.learning.TimeVariable.exponentialDecayFunction(0.05, 40)
 
 _buckets: &buckets 2.0
 _maxRadiusMultiplier: &maxRadiusMultiplier 2.0
@@ -59,16 +51,8 @@ deployments:
         concentration: *stop_right_source
       - molecule: gamma
         concentration: *gamma
-      - molecule: alpha
-        concentration: *alpha
-      - molecule: beta
-        concentration: *beta
-      - molecule: epsilon
-        concentration: *epsilon
       - molecule: window
         concentration: *window_size
-      - molecule: trajectory
-        concentration: *trajectory_size
       - molecule: left_source
         concentration: *left_source
       - molecule: right_source

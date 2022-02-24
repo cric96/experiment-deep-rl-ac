@@ -21,4 +21,4 @@ buildscript {
     }
 }
 
-rootProject.name = "experiment-coordination-2022"
+rootProject.name = "experiment-deep-learning-ac"

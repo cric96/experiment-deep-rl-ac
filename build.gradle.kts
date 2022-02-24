@@ -11,7 +11,7 @@ plugins {
     scala
     id("com.github.johnrengelman.shadow") version "4.0.3"
     id("org.scoverage") version "7.0.0"
-    id("cz.augi.gradle.wartremover") version "0.14.2"
+    //id("cz.augi.gradle.wartremover") version "0.14.2"
     idea
     kotlin("jvm") version "1.6.10"
 
@@ -136,31 +136,3 @@ File(rootProject.rootDir.path + "/src/main/yaml").listFiles()
         }
         runAllBatch.dependsOn(batch)
     }
-tasks.register<JavaExec>("startMultipleLearning") {
-    main = "it.unibo.launcher.MultiLearningRunner"
-    properties
-        .filter { (k, v) -> k.startsWith("X")}
-        .forEach { (k, v) -> args(k.drop(1), v) }
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
-tasks.register<JavaExec>("startBatchUsing") {
-    group = alchemistGroup
-    classpath = sourceSets["main"].runtimeClasspath
-    main = "it.unibo.alchemist.Alchemist"
-    val program = properties["program"].toString()
-    println("Simulating with: ${program}")
-    jvmArgs(
-        "-XX:+AggressiveHeap",
-        "-Dscalapy.python.programname=/home/gianluca/.pyenv/shims/python"
-    )
-    maxHeapSize = "${minOf(heap.toInt(), Runtime.getRuntime().availableProcessors() * taskSize)}m"
-    args(
-        //"-b",
-        "-y", file(program).absolutePath,
-        "-var", "episode",
-        "-p", threadCount,
-        "-i", 1
-    )
-
-}
